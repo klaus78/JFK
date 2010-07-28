@@ -25,10 +25,16 @@
 package jfk.function.impl;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
+import jfk.core.JFK;
 import jfk.function.Function;
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
+import jfk.function.JFKException;
+import jfk.function.classloaders.IFunctionBinder;
+import jfk.function.classloaders.IFunctionClassDefiner;
 import jfk.function.exception.CannotBindFunctionException;
 
 /**
@@ -40,6 +46,14 @@ import jfk.function.exception.CannotBindFunctionException;
 public class FunctionBuilderImpl implements IFunctionBuilder {
 
     
+    /**
+     * A cache for already defined classes. Each function is mapped with a key
+     * that corresponds to the class name the function will be bound to compound
+     * by the name of the function annotation.
+     */
+    private Map<String, IFunction> cache = new HashMap<String, IFunction>();
+    
+    
     /* (non-Javadoc)
      * @see jfk.function.IFunctionBuilder#bindFunction(java.lang.Object, jfk.function.Function)
      */
@@ -50,26 +64,43 @@ public class FunctionBuilderImpl implements IFunctionBuilder {
 	if( target == null || name == null || name.length() < 0 )
 	    throw new CannotBindFunctionException("Cannot bind the method call to a function on " + target.getClass() + " for identifier " + name);
 	
+	// create a key for the cache entry
+	String cacheKey = target.getClass().getName() + "_" + name;
+	
+	// check if the function is already in the cache
+	if( this.cache.containsKey(cacheKey) )
+	    return this.cache.get(cacheKey);
+	
+	
 	// now iterate on each public method to see if one of the target object has the annotation
 	// of a function with the specified name, and in such case prepare to get the function object
 	for( Method currentMethod : target.getClass().getMethods() )
 	    if( currentMethod.isAnnotationPresent( Function.class ) ){
 		Function functionAnnotation = currentMethod.getAnnotation( Function.class );
+		
+		
+		
 		if( functionAnnotation.name().equals( name ) ){
-		    // ok, this method must be mapped as a function!!
+		    // ok, this method must be mapped as a function!!    
 		    
-		    // TODO: fix here!!!!
-		    IFunction function = new IFunction() {
-		        
-		        @Override
-		        public Object executeCall(Object... args) {
-		    	// TODO Auto-generated method stub
-		    	return null;
-		        }
-		    };
-		    
-		    // nothing more to do
-		    return function;
+		    try {
+			// get a new function definer and build the function
+			IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
+			Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
+			
+			// now create the instance
+			IFunction function = (IFunction) functionClass.newInstance();
+			
+			// set the target object
+			((IFunctionBinder) function ).setTargetObject(target);
+			
+			// all done
+			this.cache.put(cacheKey, function);
+			return function;
+			
+		    } catch (Exception e){
+			throw new CannotBindFunctionException("Cannot create the function object ", e);
+		    }
 		}
 		    
 	    }
@@ -81,4 +112,7 @@ public class FunctionBuilderImpl implements IFunctionBuilder {
     }
 
 
+    
+    
+    
 }

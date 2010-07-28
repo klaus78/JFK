@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+<!-- 
+	This is the main configuration file for the spring framework as used by JFK.
+	The convention is that each configurable bean should be identified by its class
+	simple name, so that you can get an instance using the bean getClass().getSimpleName().
+ -->
+
+
+	<!-- the default function builder to use -->
+	<bean id="IFunctionBuilder" class="jfk.function.impl.FunctionBuilderImpl"
+		scope="prototype">
+   	</bean>
+   	
+
+</beans>

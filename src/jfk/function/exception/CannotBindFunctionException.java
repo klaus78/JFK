@@ -41,5 +41,24 @@ public class CannotBindFunctionException extends JFKException {
 	super(message);
     }
 
+    /**
+     * 
+     */
+    public CannotBindFunctionException() {
+	super();
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param message
+     * @param cause
+     */
+    public CannotBindFunctionException(String message, Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+    
+    
+
     
 }

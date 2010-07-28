@@ -33,8 +33,24 @@ import jfk.function.Function;
  */
 public class DummyClass {
 
+    
+    public final String resultString = "Hello JFK!";
+    
     @Function( name = "hello" )
     public String aMethodThatReturnsAString(){
-	return "Hello JFK!";
+	return resultString;
     }
+    
+    
+    @Function( name = "double" )
+    public Double doubleValue( Double value ){
+	return new Double( value.doubleValue() * 2 );
+    }
+    
+    
+    @Function( name = "string" )
+    public String composeString( Integer value ){
+	return resultString + value.intValue();
+    }
+    
 }

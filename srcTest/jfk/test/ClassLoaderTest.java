@@ -27,13 +27,19 @@ package jfk.test;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.security.KeyStore.Builder;
 import java.util.StringTokenizer;
 
+import jfk.core.JFK;
 import jfk.function.Function;
 import jfk.function.IFunction;
+import jfk.function.IFunctionBuilder;
 import jfk.function.JFKException;
 import jfk.function.classloaders.ClassLoaderUtils;
 import jfk.function.classloaders.FunctionClassLoader;
+import jfk.function.classloaders.IFunctionBinder;
+import jfk.function.classloaders.IFunctionClassDefiner;
+import jfk.function.exception.CannotBindFunctionException;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -85,7 +91,7 @@ public class ClassLoaderTest {
     public void testFunctionClassDefinition() throws ClassNotFoundException, InstantiationException, IllegalAccessException, JFKException{
 	
 	// get a new class loader
-	FunctionClassLoader loader = new FunctionClassLoader();
+	IFunctionClassDefiner loader = new FunctionClassLoader();
 	
 	DummyClass dummy = new DummyClass();
 	
@@ -93,6 +99,8 @@ public class ClassLoaderTest {
 	    if( m.isAnnotationPresent( Function.class) ){
 		Function annotation = m.getAnnotation( Function.class );
 		
+		if( ! annotation.name().equals("hello") )
+		    continue;
 		
 		// now get the IFunction object
 		Class clazz = loader.getIFunctionClassDefinition( dummy, m );
@@ -121,23 +129,68 @@ public class ClassLoaderTest {
 		System.out.println("Superclass " + clazz.getSuperclass().getName());
 		
 		// get an instance
-		IFunction function = null;
-		try{
-		    function = (IFunction) clazz.newInstance();
-		}catch(InstantiationException e){
-		    System.out.println("Exception " + e +" = " + e.getCause() );
-		    e.printStackTrace();
-		    throw e;
-
-		}
+		IFunction function = (IFunction) clazz.newInstance();
 		
 		
 		if( function == null )
 		    fail("Null function instance");
 		if( !(function instanceof IFunction) )
 		    fail("Not an IFunction object!");
+		if( !(function instanceof IFunctionBinder) )
+		    fail("Not an instance of IFunctionBinder");
+		
+		// set the target
+		((IFunctionBinder) function).setTargetObject(dummy);
+		
+		// execute the function
+		String result = (String) function.executeCall( null );
+		
+		// test the result
+		if( ! dummy.resultString.equals(result) )
+		    fail("Function invocation does not result!");
 	    }
 	
     }
 
+    
+    
+    @Test
+    public void testEndUserApi() throws CannotBindFunctionException{
+	// create the dummy object
+	DummyClass dummy = new DummyClass();
+	
+	// now get the function
+	IFunctionBuilder builder = JFK.getFunctionBuilder();
+	IFunction function = builder.bindFunction( dummy, "hello" );
+	
+	// execute the function
+	String result = (String) function.executeCall( null );
+	
+	// test the result
+	if( ! dummy.resultString.equals(result) )
+	    fail("Function invocation does not result!");
+	
+	// now get another function
+	IFunction function2 = builder.bindFunction(dummy, "double" );
+	
+	if( function.equals(function2) )
+	    fail("Two functions should not be equale with different names!");
+	
+	Double d1 = new Double(10.5);
+	Double d2 = (Double) function2.executeCall( new Object[]{ d1 } );
+	if( (d1.doubleValue() * 2) != (d2.doubleValue() ) )
+	    fail("Return value is not the same! (" + d1.doubleValue() + " vs " + d2.doubleValue() + ")");
+	
+	
+	// another function
+	int value = 10;
+	IFunction function3 = builder.bindFunction(dummy, "string");
+	if( function3.equals(function2) || function3.equals(function) )
+	    fail("A function that should not be the same of a previous one!");
+	
+	result = (String) function3.executeCall( new Object[]{ value } );
+	if( ! result.equals( dummy.resultString + value ) )
+	    fail("Result value for string composition is wrong!");
+	
+    }
 }

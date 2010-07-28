@@ -26,6 +26,7 @@ package jfk.test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.KeyStore.Builder;
 import java.util.StringTokenizer;
@@ -193,4 +194,69 @@ public class ClassLoaderTest {
 	    fail("Result value for string composition is wrong!");
 	
     }
+    
+    
+    
+    @Test
+    public void testCache() throws CannotBindFunctionException{
+	
+	// create the dummy object
+	DummyClass dummy = new DummyClass();
+	
+	// now get the function
+	IFunctionBuilder builder = JFK.getFunctionBuilder();
+	IFunction function = builder.bindFunction( dummy, "hello" );
+	
+	IFunction function2 = builder.bindFunction(dummy, "hello");
+	
+	if(! function.equals(function2) )
+	    fail("Don't get the same function for the same method!");
+    }
+    
+    
+    
+    @Test
+    public void speedTest() throws CannotBindFunctionException, SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException{
+	// create the dummy object
+	DummyClass dummy = new DummyClass();
+	
+	// now get the function
+	IFunctionBuilder builder = JFK.getFunctionBuilder();
+	long start1 = System.nanoTime();
+	IFunction function = builder.bindFunction( dummy, "hello" );
+	long end1 = System.nanoTime();
+	
+	function.executeCall(null);
+	long end2 = System.nanoTime();
+	
+	System.out.println("Total compilation and execution time = " + (end2 - start1) );
+	System.out.println("Compilation/Invocation time " + (end1-start1) + " " + (end2 - end1) );
+	long total1 = end2 - start1;
+	
+	
+	// reflection method
+	start1 = System.nanoTime();
+	for( Method m : dummy.getClass().getDeclaredMethods() )
+	    if( m.isAnnotationPresent( Function.class) ){
+		Function annotation = m.getAnnotation( Function.class );
+		
+		if( ! annotation.name().equals("hello") )
+		    continue;
+		
+		end1 = System.nanoTime();
+		m.invoke(dummy, null);
+		end2 = System.nanoTime();
+		break;
+	    }
+	
+	
+	
+	System.out.println("Total reflection and execution time = " + (end2 - start1) );
+	System.out.println("Reflection/Invocation time " + (end1-start1) + " " + (end2 - end1) );
+	long total2 = end2 - start1;
+	
+	if( total2 < total1 )
+	    fail("Reflection is faster than function objects!");
+    }
+    
 }

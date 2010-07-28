@@ -26,6 +26,7 @@ package jfk.core;
 
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
+import jfk.function.classloaders.IFunctionClassDefiner;
 
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -63,6 +64,18 @@ public class JFK {
     public static synchronized IFunctionBuilder getFunctionBuilder(){
 	return (IFunctionBuilder) xmlBeanFactory.getBean( IFunctionBuilder.class.getSimpleName() );
     }
+
+    
+    /**
+     * Gets a bean (pluggable and configurable) for the system.
+     * @param clazz the class (interface) to get the bean for, its simple name is used in
+     * the configuration.
+     * @return the bean from the configuration of this system
+     */
+    public static synchronized Object getBean( Class clazz ){
+	return xmlBeanFactory.getBean( clazz.getSimpleName() );
+    }
+    
     
 
 }

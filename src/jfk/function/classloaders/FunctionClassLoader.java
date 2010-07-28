@@ -56,7 +56,7 @@ import org.apache.log4j.xml.DOMConfigurator;
  * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
  *
  */
-public class FunctionClassLoader extends SecureClassLoader {
+public class FunctionClassLoader extends SecureClassLoader implements IFunctionClassDefiner {
 
     /**
      * The logger for this class loader.
@@ -179,6 +179,7 @@ public class FunctionClassLoader extends SecureClassLoader {
 		
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
+		//methodCode.append( "System.out.println(\" method call on \" + "+ privateReferenceName + ");");
 		methodCode.append( "return");
 		methodCode.append( " " );
 		methodCode.append( "(" );
@@ -202,7 +203,7 @@ public class FunctionClassLoader extends SecureClassLoader {
 		    methodCode.append( targetMethodParameters[paramNumber].getName() );
 		    methodCode.append( ")" );
 		    // the argument value is in the param array
-		    methodCode.append( "param[i]" );
+		    methodCode.append( "param" + paramNumber + "[" + paramNumber + "]" );	// variadic method -> array param!
 		}
 		
 		methodCode.append( ");" );
@@ -302,13 +303,10 @@ public class FunctionClassLoader extends SecureClassLoader {
 
     }
     
-    /**
-     * The entry method to define a Function object.
-     * @param targetObject the reference on which the method must be invoked
-     * @param targetMethod the method to invoke
-     * @return the class defintion
-     * @throws JFKException if something goes wrong
+    /* (non-Javadoc)
+     * @see jfk.function.classloaders.IFunctionClassDefiner#getIFunctionClassDefinition(java.lang.Object, java.lang.reflect.Method)
      */
+    @Override
     public final synchronized Class getIFunctionClassDefinition(Object targetObject, Method targetMethod ) throws JFKException{
 	try {
 	    // check params

@@ -12,8 +12,14 @@
 
 	<!-- the default function builder to use -->
 	<bean id="IFunctionBuilder" class="jfk.function.impl.FunctionBuilderImpl"
+		scope="singleton">
+   	</bean>
+   	
+   	<!-- the default function definition class loader to use -->
+	<bean id="IFunctionClassDefiner" class="jfk.function.classloaders.FunctionClassLoader"
 		scope="prototype">
    	</bean>
+   	
    	
 
 </beans>

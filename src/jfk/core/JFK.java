@@ -61,7 +61,7 @@ public class JFK {
      * @return the function builder to use in the current system configuration
      */
     public static synchronized IFunctionBuilder getFunctionBuilder(){
-	return (IFunctionBuilder) xmlBeanFactory.getBean( IFunction.class.getSimpleName() );
+	return (IFunctionBuilder) xmlBeanFactory.getBean( IFunctionBuilder.class.getSimpleName() );
     }
     
 

@@ -45,6 +45,7 @@ import jfk.function.JFKException;
 import jfk.function.exception.BadArityException;
 import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.CannotBindFunctionException;
+import jfk.function.exception.TargetBindException;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -184,10 +185,22 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		}
 		
 		methodCode.append( ") " );
-		methodCode.append( " throws " );
-		methodCode.append( BadArityException.class.getName() );
-		methodCode.append( ", " );
-		methodCode.append( BadParameterTypeException.class.getName() );
+		
+		
+		// exception management
+		CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
+		if( exceptions != null && exceptions.length > 0 ){
+		    methodCode.append( "throws " );
+		    
+		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
+			if( exceptionNumber > 0 )
+			    methodCode.append( ", " );
+			
+			methodCode.append( exceptions[ exceptionNumber ].getName() );
+		    }
+		}
+
+		
 		
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
@@ -282,7 +295,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( targetMethodParameters[paramNumber].getName() );
 		    methodCode.append( ")" );
 		    // the argument value is in the param array
-		    methodCode.append( "param0"  + "[" + paramNumber + "]" );	// variadic method -> array param!
+		    methodCode.append( "param0"  + "[" + paramNumber + "]" );	// variadic method -> array param0!
 		}
 		
 		methodCode.append( ");" );
@@ -330,10 +343,37 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( " param" + parameterNumber );
 		}
 		
-		methodCode.append( ")\n" );
+		methodCode.append( ") " );
 		
+		// exception management
+		CtClass exceptions[] = currentMethod.getExceptionTypes();
+		if( exceptions != null && exceptions.length > 0 ){
+		    methodCode.append( "throws " );
+		    
+		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
+			if( exceptionNumber > 0 )
+			    methodCode.append( ", " );
+			
+			methodCode.append( exceptions[ exceptionNumber ].getName() );
+		    }
+		}
+		
+		methodCode.append( "\n" );
 		// body definition
 		methodCode.append( "{\n\t" );
+
+		
+		// security check: the first argument must be of the right type
+		methodCode.append(" if( param0 == null || (! ( param0 instanceof ");
+		methodCode.append( this.targetInstance.getClass().getName() );
+		methodCode.append( ") ) )" );
+		methodCode.append( "\n\t\t" );
+		methodCode.append( "throw new " );
+		methodCode.append( TargetBindException.class.getName() );
+		methodCode.append( "(\"The binding object is not of the right type!\");" );
+		methodCode.append( "\n\n" );
+		
+		
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( " = " );

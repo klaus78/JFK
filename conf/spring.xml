@@ -20,6 +20,9 @@
 		scope="prototype">
    	</bean>
    	
-   	
+   	<!-- the default closure builder  -->
+   	<bean id="IClosureBuilder" class="jfk.function.impl.ClosureBuilderImpl"
+		scope="prototype">
+   	</bean>
 
 </beans>

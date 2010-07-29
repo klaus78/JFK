@@ -93,8 +93,14 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
      * @see java.lang.ClassLoader#findClass(java.lang.String)
      */
     @Override
-    protected Class<?> findClass(String arg0) throws ClassNotFoundException {
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
 	try {
+	    
+	    // security check: do not load any class that is not the IFunction one!
+	    if( ! IFunction.class.getName().equals(name) )
+		throw new ClassNotFoundException("Cannot load a class different from IFunction with this classloader!");
+	    
+	    
 	    // the class loader is busy now
 	    synchronized( this ){
 		this.status = ClassLoaderStatus.BUSY;

@@ -42,6 +42,8 @@ import javassist.NotFoundException;
 import jfk.function.Function;
 import jfk.function.IFunction;
 import jfk.function.JFKException;
+import jfk.function.exception.BadArityException;
+import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.CannotBindFunctionException;
 
 import org.apache.log4j.Logger;
@@ -183,7 +185,9 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		
 		methodCode.append( ") " );
 		methodCode.append( " throws " );
-		methodCode.append( JFKException.class.getName() );
+		methodCode.append( BadArityException.class.getName() );
+		methodCode.append( ", " );
+		methodCode.append( BadParameterTypeException.class.getName() );
 		
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
@@ -197,9 +201,22 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append(" if( param0 == null || param0.length != ");
 		    methodCode.append( this.currentMethod.getParameterTypes().length );
 		    methodCode.append( ")\n\t\t" );
-		    methodCode.append( "throw new ");
-		    methodCode.append( JFKException.class.getName() );
-		    methodCode.append( "(\"Bad method arity!\");\n\n");
+		    methodCode.append( "{\n\t\t\t" );
+		    methodCode.append( BadArityException.class.getName() );
+		    methodCode.append( " bae = new " );
+		    methodCode.append( BadArityException.class.getName() );
+		    methodCode.append( "(\"Bad arity!\");\n\n");
+		    methodCode.append( "\n\t\t\t" );
+		    methodCode.append( "bae.setRequiredArity( " );
+		    methodCode.append( requiredParameters );
+		    methodCode.append( " );" );
+		    methodCode.append( "\n\t\t\t" );
+		    methodCode.append( "bae.setSuppliedArity( (param0 != null ? param0.length : 0 ) );" );
+		    methodCode.append( "\n\t\t\t" );
+		    methodCode.append( "throw bae; " );
+		    methodCode.append( "\n\t\t" );
+		    methodCode.append( "}\n" );
+		    
 		    
 		    // another security check: the method must receive the exact type of the parameters
 		    Class parameterTypes[] = this.currentMethod.getParameterTypes();
@@ -212,11 +229,29 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 			methodCode.append( parameterTypes[checkNumber].getName() );
 			methodCode.append( "\") )" );
 			methodCode.append( "\n\t\t" );
-			methodCode.append( "throw new " );
-			methodCode.append( JFKException.class.getName() );
+			methodCode.append( "{\n\t\t\t" );
+			methodCode.append( BadParameterTypeException.class.getName() );
+			methodCode.append( " bpe = new " );
+			methodCode.append( BadParameterTypeException.class.getName() );
 			methodCode.append( "(\"Bad parameter type!\");\n\n");
+			methodCode.append( "\n\t\t\t" );
+			methodCode.append( "bpe.setRequiredType( ");
+			methodCode.append( parameterTypes[checkNumber].getName() );
+			methodCode.append( ".class" );
+			methodCode.append( " );" );
+			methodCode.append( "\n\t\t\t" );
+			methodCode.append( "bpe.setSuppliedType( (param0[" );
+			methodCode.append( checkNumber );
+			methodCode.append( "] != null ? param0[" );
+			methodCode.append( checkNumber );
+			methodCode.append( "].getClass() : java.lang.Void.class) );" );
+			methodCode.append( "\n\t\t\t" );
+			methodCode.append( "throw bpe; " );
+			methodCode.append( "\n\t\t" );
+			methodCode.append( "}\n" );
+
 		    }
-		    
+
 		}
 		
 		

@@ -24,6 +24,9 @@
  */
 package jfk.function;
 
+import jfk.function.exception.BadArityException;
+import jfk.function.exception.BadParameterTypeException;
+
 /**
  * This interface represents the main concept of the functional programming as provided by JFK.
  * The idea is that this interface can wrap a single function, and therefore acts as "function pointer"
@@ -52,8 +55,9 @@ public interface IFunction {
      * 
      * @param args the list of arguments to pass to the target method call
      * @return an object representing the (generic) result of the target method call
-     * @throws JFKException if something goes wrong with the method call
+     * @throws BadArityException if the number of parameters is wrong
+     * @throws BadParameterTypeException if one of the parameters is of the wrong type
      */
-    public Object executeCall( Object...args ) throws JFKException;
+    public Object executeCall( Object...args ) throws BadArityException, BadParameterTypeException;
 
 }

@@ -55,8 +55,8 @@ public interface IFunction {
      * 
      * @param args the list of arguments to pass to the target method call
      * @return an object representing the (generic) result of the target method call
-     * @throws BadArityException if the number of parameters is wrong
-     * @throws BadParameterTypeException if one of the parameters is of the wrong type
+     * @throws BadArityException if the number of parameters is wrong (evaluated at run-time)
+     * @throws BadParameterTypeException if one of the parameters is of the wrong type (evaluated at run-time)
      */
     public Object executeCall( Object...args ) throws BadArityException, BadParameterTypeException;
 

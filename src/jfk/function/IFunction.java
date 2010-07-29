@@ -52,7 +52,8 @@ public interface IFunction {
      * 
      * @param args the list of arguments to pass to the target method call
      * @return an object representing the (generic) result of the target method call
+     * @throws JFKException if something goes wrong with the method call
      */
-    public Object executeCall( Object...args );
+    public Object executeCall( Object...args ) throws JFKException;
 
 }

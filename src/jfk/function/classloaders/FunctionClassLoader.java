@@ -181,11 +181,26 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( "param" + paramNumber); 
 		}
 		
-		methodCode.append( ")" );
+		methodCode.append( ") " );
+		methodCode.append( " throws " );
+		methodCode.append( JFKException.class.getName() );
 		
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
 		//methodCode.append( "System.out.println(\" method call on \" + "+ privateReferenceName + ");");
+		
+		// security checks: the method must receive the exact number of parameters!
+		if( this.currentMethod.getParameterTypes() != null && this.currentMethod.getParameterTypes().length > 0 ){
+		    methodCode.append(" if( param0 == null || param0.length != ");
+		    methodCode.append( this.currentMethod.getParameterTypes().length );
+		    methodCode.append( ")\n\t\t" );
+		    methodCode.append( "throw new ");
+		    methodCode.append( JFKException.class.getName() );
+		    methodCode.append( "(\"Bad method arity!\");\n\n");
+		}
+		
+		
+		methodCode.append( "\n\t" );
 		methodCode.append( "return");
 		methodCode.append( " " );
 		methodCode.append( "(" );
@@ -209,7 +224,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( targetMethodParameters[paramNumber].getName() );
 		    methodCode.append( ")" );
 		    // the argument value is in the param array
-		    methodCode.append( "param" + paramNumber + "[" + paramNumber + "]" );	// variadic method -> array param!
+		    methodCode.append( "param0"  + "[" + paramNumber + "]" );	// variadic method -> array param!
 		}
 		
 		methodCode.append( ");" );

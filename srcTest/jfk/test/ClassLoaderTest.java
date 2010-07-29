@@ -156,7 +156,7 @@ public class ClassLoaderTest {
     
     
     @Test
-    public void testEndUserApi() throws CannotBindFunctionException{
+    public void testEndUserApi() throws JFKException{
 	// create the dummy object
 	DummyClass dummy = new DummyClass();
 	
@@ -183,6 +183,15 @@ public class ClassLoaderTest {
 	    fail("Return value is not the same! (" + d1.doubleValue() + " vs " + d2.doubleValue() + ")");
 	
 	
+	// test arity
+	try{
+	    function2 = builder.bindFunction(dummy, "string2");
+	    function2.executeCall(null);
+	}catch(JFKException e){
+	    e.printStackTrace();
+	}
+	
+	
 	// another function
 	int value = 10;
 	IFunction function3 = builder.bindFunction(dummy, "string");
@@ -192,6 +201,16 @@ public class ClassLoaderTest {
 	result = (String) function3.executeCall( new Object[]{ value } );
 	if( ! result.equals( dummy.resultString + value ) )
 	    fail("Result value for string composition is wrong!");
+	
+	
+	// test arity
+	try{
+	    function3 = builder.bindFunction(dummy, "string2");
+	    function3.executeCall(new Object[]{ value });
+	    fail("Method call bad arity check passed!");
+	}catch(JFKException e){
+	    e.printStackTrace();
+	}
 	
     }
     
@@ -216,7 +235,7 @@ public class ClassLoaderTest {
     
     
     @Test
-    public void speedTest() throws CannotBindFunctionException, SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException{
+    public void speedTest() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, JFKException{
 	// create the dummy object
 	DummyClass dummy = new DummyClass();
 	

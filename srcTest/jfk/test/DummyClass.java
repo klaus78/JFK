@@ -53,4 +53,9 @@ public class DummyClass {
 	return resultString + value.intValue();
     }
     
+    
+    @Function( name = "string2" )
+    public String composeStringInteger(String s, Integer value ){
+	return s + value.toString();
+    }
 }

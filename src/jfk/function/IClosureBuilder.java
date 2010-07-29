@@ -43,9 +43,7 @@ public interface IClosureBuilder {
      * 
      * @param code the Java code of the closure
      * @return the closure to use
-     * @throws BadArityException if the number of parameters supplied at run-time is wrong
-     * @throws BadParameterTypeException if one of the parameter provided at run-time is of the wrong type
      * @throws ClosureException if something has gone wrong with the closure construction (e.g., the code is not valid)
      */
-    public IClosure buildClosure( String code ) throws BadArityException, BadParameterTypeException, ClosureException;
+    public IClosure buildClosure( String code ) throws ClosureException;
 }

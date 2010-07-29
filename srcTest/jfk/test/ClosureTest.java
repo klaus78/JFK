@@ -26,7 +26,11 @@ package jfk.test;
 
 
 import jfk.core.JFK;
+import jfk.function.IClosure;
 import jfk.function.IClosureBuilder;
+import jfk.function.exception.BadArityException;
+import jfk.function.exception.BadParameterTypeException;
+import jfk.function.exception.ClosureException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +53,7 @@ public class ClosureTest {
     
     
     @Test
-    public void testClosureBuilder(){
+    public void testClosureBuilder() throws ClosureException, BadArityException, BadParameterTypeException{
 	// get a new closure builder
 	IClosureBuilder builder = (IClosureBuilder) JFK.getBean( IClosureBuilder.class );
 	
@@ -57,6 +61,50 @@ public class ClosureTest {
 	if( builder == null )
 	    fail("Cannot get a builder for the configuration");
 	
+	// compile a code
+	StringBuffer code = new StringBuffer(1000);
+	code.append( "public java.lang.String hello(){ System.out.println(\"Hello Closure World\"); return \"Hello Closure World!\"; }" );
+	IClosure closure = builder.buildClosure( code.toString() );
+	
+	if( closure == null )
+	    fail("Didn't get a closure!");
+	
+	// execute the closure
+	closure.executeCall(null);
+
+	// a new closure
+	code = new StringBuffer(1000);
+	code.append( " public void hello2(){ System.out.println(\"*** Hello from a void method\");}");
+	closure = builder.buildClosure( code.toString() );
+
+	if( closure == null )
+	    fail("Didn't get a closure!");
+
+	// execute the closure
+	closure.executeCall(null);
+	
+	
+	// a new closure
+	code = new StringBuffer(1000);
+	code.append( "public String concat(String s, Integer i){ return s + i.intValue(); }");
+	closure = builder.buildClosure( code.toString() );
+	String s = "Hello";
+	int i = 10;
+	String result = (String) closure.executeCall( new Object[]{ s, new Integer(i) } );
+
+	if( ! result.equals( s + i ) )
+	    fail("Closure result incorrect!");
+	
+	// another closure
+	code = new StringBuffer(1000);
+	code.append( "public Integer loop( Integer ir ){ for(int i =0; i< ir.intValue(); i++) System.out.println(\"Interaction \" + i); return ir; } ");
+	closure = builder.buildClosure( code.toString() );
+	
+	Integer k = new Integer( 30 );
+	Integer ir = (Integer) closure.executeCall( new Object[]{ k } );
+	
+	if( ir.intValue() != k.intValue() )
+	    fail("Closure return mismatch!");
 	
     }
 

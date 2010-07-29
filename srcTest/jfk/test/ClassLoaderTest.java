@@ -212,6 +212,16 @@ public class ClassLoaderTest {
 	    e.printStackTrace();
 	}
 	
+	
+	// test function parameters
+	try{
+	    function3 = builder.bindFunction(dummy, "string2");
+	    function3.executeCall(new Object[]{ new String("A"), new String("B") });
+	    fail("Method call parameter check passed!");
+	}catch(JFKException e){
+	    e.printStackTrace();
+	}
+	
     }
     
     

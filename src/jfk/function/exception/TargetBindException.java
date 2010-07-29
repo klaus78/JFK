@@ -22,24 +22,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package jfk.function.classloaders;
+package jfk.function.exception;
 
-import jfk.function.exception.TargetBindException;
+import jfk.function.JFKException;
 
 /**
- * An interface to bind a target object on which a method must be invoked onto to
- * a Function object.
- * 
+ * An exception to notify that something goes wrong with a bind.
  * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
  *
  */
-public interface IFunctionBinder {
-    
+public class TargetBindException extends JFKException {
+
     /**
-     * The method to set the target object. 
-     * @param target the target object
-     * @throws TargetBindException if something goes wrong while binding
+     * 
      */
-    public void setTargetObject( Object target ) throws TargetBindException;
+    public TargetBindException() {
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param message
+     * @param cause
+     */
+    public TargetBindException(String message, Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param message
+     */
+    public TargetBindException(String message) {
+	super(message);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public TargetBindException(Throwable cause) {
+	super(cause);
+	// TODO Auto-generated constructor stub
+    }
 
 }

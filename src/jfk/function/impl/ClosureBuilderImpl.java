@@ -26,9 +26,12 @@ package jfk.function.impl;
 
 import jfk.function.IClosure;
 import jfk.function.IClosureBuilder;
+import jfk.function.classloaders.ClosureClassLoader;
+import jfk.function.classloaders.IFunctionBinder;
 import jfk.function.exception.BadArityException;
 import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.ClosureException;
+import jfk.function.exception.TargetBindException;
 
 /**
  * The default closure builder.
@@ -51,13 +54,18 @@ public class ClosureBuilderImpl implements IClosureBuilder {
      */
     @Override
     public IClosure buildClosure(String code)
-					     throws BadArityException,
-					     BadParameterTypeException,
-					     ClosureException {
-	
-	
-	return null;
-	
+					     throws  ClosureException {
+	try {
+	    ClosureClassLoader loader = new ClosureClassLoader();
+	    loader.setClosureCode(code);
+	    IClosure closure = loader.getClosure();
+
+	    ((IFunctionBinder) closure).setTargetObject( loader.getTargetInstance() );
+	    return closure;
+	} catch (TargetBindException e) {
+	    throw new ClosureException("Cannot bind closure", e);
+	}
+
 	
     }
 

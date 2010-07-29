@@ -25,73 +25,55 @@
 package jfk.function.classloaders;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.security.SecureClassLoader;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.xml.DOMConfigurator;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
-import javassist.CtMember;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-
-import jfk.function.Function;
+import jfk.function.IClosure;
+import jfk.function.IClosureBuilder;
 import jfk.function.IFunction;
-import jfk.function.JFKException;
 import jfk.function.exception.BadArityException;
 import jfk.function.exception.BadParameterTypeException;
-import jfk.function.exception.CannotBindFunctionException;
+import jfk.function.exception.ClosureException;
 import jfk.function.exception.TargetBindException;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
-
-
-
 /**
- * This is a class loader used to produce an implementation of
- * the IFunction {@link IFunction} object in order to allow method/function mapping.
+ * The class loader to build a closure.
  * 
  * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
  *
  */
-public class FunctionClassLoader extends SecureClassLoader implements IFunctionClassDefiner {
+public class ClosureClassLoader extends FunctionClassLoader {
 
-    /**
-     * The logger for this class loader.
-     */
-    protected static Logger logger = org.apache.log4j.Logger.getLogger( FunctionClassLoader.class );
     
-    // configure the logger
-    static{
-	DOMConfigurator.configure("conf/log4j.xml");
+   
+    
+    
+    /**
+     * The closure code to compile and get information on the closure.
+     */
+    private String closureCode = null;
+    
+    
+    /**
+     * 
+     */
+    public ClosureClassLoader() {
+	// TODO Auto-generated constructor stub
     }
-    
-    
-    /**
-     * The function annotation this class loader is working on.
-     */
-    private Function functionAnnotation = null;
-    
-    /**
-     * The method to which the function will be bound.
-     */
-    protected Method currentMethod = null;
-    
-    /**
-     * The target on which the method will be called when the function is executed.
-     */
-    protected Object targetInstance = null;
-    
-    /**
-     * The current status of the class loader.
-     */
-    protected ClassLoaderStatus status = ClassLoaderStatus.READY;
 
+   
+    
+    
     /* (non-Javadoc)
      * @see java.lang.ClassLoader#findClass(java.lang.String)
      */
@@ -100,8 +82,8 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	try {
 	    
 	    // security check: do not load any class that is not the IFunction one!
-	    if( ! IFunction.class.getName().equals(name) )
-		throw new ClassNotFoundException("Cannot load a class different from IFunction with this classloader!");
+	    if( ! IClosure.class.getName().equals(name) )
+		throw new ClassNotFoundException("Cannot load a class different from IClosure with this classloader!");
 	    
 	    
 	    // the class loader is busy now
@@ -117,53 +99,94 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    // the array that will store the in-memory byte code
 	    byte[] bytecode = null;
 	    
-	    // I have to compute a name for the class to implement.
-	    String functionClassName = ClassLoaderUtils.computeFunctionClassName( this.functionAnnotation, this.targetInstance.getClass() );
-	    logger.debug("The new function class name is " + functionClassName );
-	    
-	    // create a new class for the specified name
-	    CtClass newFunctionClass = pool.makeClass( functionClassName );
+	   
 	    
 	    // I need also a ctclass for the target object
-	    CtClass targetObjectCtClass = pool.get( this.targetInstance.getClass().getName() );
+	    // Since a closure does not have a target, I need to use a simple Object
+	    String targetObjectClassName = ClassLoaderUtils.getClosureClassName();
+	    CtClass targetObjectCtClass = pool.makeClass( targetObjectClassName );
 	    
+	    // compile the method passed and inject it into the target object
+	    logger.debug("Compiling the closure method code\n");
+	    logger.debug( this.closureCode );
+	    CtMethod closureMethod = CtMethod.make( this.closureCode, targetObjectCtClass );
+	    targetObjectCtClass.addMethod(closureMethod);
+
+
+	    try{
+		// now I compile the class and create a new object
+		bytecode = targetObjectCtClass.toBytecode();
+		Class compiledClosureClass = this.defineClass( targetObjectClassName, bytecode, 0, bytecode.length );
+		this.targetInstance = compiledClosureClass.newInstance();
+		
+		// if here I've got the closure target object, get the method for such target object
+		for( Method met : compiledClosureClass.getDeclaredMethods() )
+		    if( met.getName().equals( closureMethod.getName() ) ){
+			this.currentMethod = met;
+			break;
+		    }
+		
+		// the method must be found
+		if( this.currentMethod == null )
+		    throw new ClassNotFoundException("Cannot find the closure implementation method");
+		
+		logger.debug("Closure target object built: " + this.targetInstance.getClass() );
+		
+	    }catch (InstantiationException e) {
+		logger.error("Cannot instantiate class while defining closure target object", e);
+		throw new ClassNotFoundException("Instantiation problem while creating the closure target object", e);
+	    } catch (IllegalAccessException e) {
+		logger.error("Cannot access class while defining closure target object", e);
+		throw new ClassNotFoundException("Access problem while defining the closure target object",  e);
+	    }
+
+	    
+	    
+	    // I have to compute a name for the class to implement.
+	    String closureClassName = ClassLoaderUtils.computeClosureClassName();
+	    logger.debug("The new closure class name is " + closureClassName );
+	    
+	    // create a new class for the specified name
+	    CtClass newClosureClass = pool.makeClass( closureClassName );
 	    
 	    
 	    
 	    // now the class has the new member, I need an empty constructor so to be sure that reflection
 	    // will work instantiating the class
 	    logger.debug("Creating a new empty constructor");
-	    CtConstructor constructor = new CtConstructor(null, newFunctionClass );
+	    CtConstructor constructor = new CtConstructor(null, newClosureClass );
 	    constructor.setBody(";");
-	    newFunctionClass.addConstructor(constructor);
+	    newClosureClass.addConstructor(constructor);
 	    
 	    
 	    
 	    // now I have to add a field with the target object on which I'm going to call the method.
 	    // The idea is that the function object will have a private refence to the target object
 	    // on which it will call the method specified.
-	    String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( this.targetInstance.getClass() );
+	    String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( targetObjectClassName );
 	    logger.debug("The private reference to the target object will be " + privateReferenceName );
 	    
 	    // now that I've got the name, create the field to add to the new class
 	    CtField privateReferenceField = new CtField( targetObjectCtClass,		// class type of the field 
 		                                         privateReferenceName, 		// field name
-		                                         newFunctionClass 		// declaring class
+		                                         newClosureClass 		// declaring class
 		                                         );
 	    // TODO make the modifier private
 	    //privateReferenceField.setModifiers(  )
-	    newFunctionClass.addField( privateReferenceField );
+	    newClosureClass.addField( privateReferenceField );
 	    
 	    
-	    // now I need to implement the inteface IFunction
-	    CtClass iFunctionCtClass = pool.get( IFunction.class.getName() );
-	    newFunctionClass.addInterface(iFunctionCtClass);
+	    // now I need to implement the inteface IClosure
+	    CtClass iClosureCtClass = pool.get( IClosure.class.getName() );
+	    newClosureClass.addInterface(iClosureCtClass);
 	    
 	    // now add the IFunction method implementation
 	    StringBuffer methodCode = new StringBuffer(1000);
-	    for( CtMethod iFunctionMethod : iFunctionCtClass.getDeclaredMethods() ){
+	    // WARNING: IClosure does not define any method, I have to go to the superclass which is a IFunction
+	    CtClass functionCtClass = pool.get( IFunction.class.getName() );
+	    for( CtMethod iFunctionMethod : functionCtClass.getDeclaredMethods() ){
 				
-		logger.debug("Implementing the IFunction method " + iFunctionMethod.getName() );
+		logger.debug("Implementing the IClosure method " + iFunctionMethod.getName() );
 		
 		// method name and qualifiers
 		methodCode.append( "public");
@@ -204,8 +227,9 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
-		//methodCode.append( "System.out.println(\" method call on \" + "+ privateReferenceName + ");");
 		
+		
+
 		
 		
 		// security checks: the method must receive the exact number of parameters!
@@ -270,10 +294,10 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		
 		
 		
-		
+
 		methodCode.append( "\n\t" );
+		
 		// WARNING: if the method has a void return type, do not insert a return statement
-		System.out.println("\n\n\t\t =>\t "   );
 		boolean isVoid = ( this.currentMethod.getReturnType().toString().equals("void") || java.lang.Void.class.equals( this.currentMethod.getReturnType() ) ); 
 		if(! isVoid ){
 		    methodCode.append( "return");
@@ -282,7 +306,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( this.currentMethod.getReturnType().getName() );
 		    methodCode.append( ") " );
 		}
-
+		
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( "." );
@@ -313,7 +337,6 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( "\n\t return null;\n" );
 		}
 		
-		
 		// end of the method body
 		methodCode.append( "\n}\n" );
 		
@@ -321,8 +344,8 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		logger.debug( methodCode.toString() );
 		
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
-		newFunctionClass.addMethod(compiledMethod);
+		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
+		newClosureClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
 
@@ -336,7 +359,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    CtClass binderClass = pool.get( IFunctionBinder.class.getName() );
 	    
 	    // add the interface to the current class
-	    newFunctionClass.addInterface(binderClass);
+	    newClosureClass.addInterface(binderClass);
 
 	    // create all the methods (it should be only one)
 	    for( CtMethod currentMethod : binderClass.getDeclaredMethods() ){
@@ -399,15 +422,15 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		logger.debug("Generated setter method \n" + methodCode.toString() );
 		
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
-		newFunctionClass.addMethod(compiledMethod);
+		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
+		newClosureClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
 	    
 	    
 
 	    // now define the class
-	    bytecode = newFunctionClass.toBytecode();
+	    bytecode = newClosureClass.toBytecode();
 	    
 	    // the class loader is ready now
 	    synchronized( this ){
@@ -415,7 +438,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    }
 
 	    
-	    return this.defineClass( functionClassName, bytecode, 0, bytecode.length );
+	    return this.defineClass( closureClassName, bytecode, 0, bytecode.length );
 	    
 	    
         } catch (NotFoundException e) {
@@ -434,83 +457,59 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
         }
 
     }
-    
-    /* (non-Javadoc)
-     * @see jfk.function.classloaders.IFunctionClassDefiner#getIFunctionClassDefinition(java.lang.Object, java.lang.reflect.Method)
+
+
+
+
+    /**
+     * A method to set the value of the closureCode
+     * field within this object instance.
+     * @param closureCode the closureCode to set
      */
-    @Override
-    public final synchronized Class getIFunctionClassDefinition(Object targetObject, Method targetMethod ) throws JFKException{
+    public synchronized final void setClosureCode(String closureCode) {
+        // set the value of the this.closureCode field
+        this.closureCode = closureCode;
+    }
+
+
+
+
+    /**
+     * A method to get the closure implementation.
+     * @return
+     * @throws ClosureException
+     */
+    public synchronized final IClosure getClosure() throws ClosureException {
+	Class closureClass;
 	try {
-	    // check params
-	    if( ClassLoaderStatus.BUSY.equals( this.status ) )
-		throw new JFKException("The classloader is busy!");
-	    
-	    if( targetObject == null || targetMethod == null )
-		throw new IllegalArgumentException("Cannot proceed without the method and the target object");
-	    
-	    if( ! targetMethod.isAnnotationPresent( Function.class ) )
-		throw new CannotBindFunctionException("The specified method is not a function annotated one!");
-	    
-	    // get the annotation from the method
-	    Function functionAnnotation = targetMethod.getAnnotation( Function.class );
-	    
-	    // set the parameters for the loader
-	    this.currentMethod = targetMethod;
-	    this.targetInstance = targetObject;
-	    this.functionAnnotation = functionAnnotation;
-	    
-	    // define the class
-	    return this.findClass( IFunction.class.getName() );
+	    closureClass = this.findClass( IClosure.class.getName() );
+	    return (IClosure) closureClass.newInstance();
 	} catch (ClassNotFoundException e) {
-	    logger.error("Error defining the IFunction class", e);
-	    throw new JFKException(e);
+	    throw new ClosureException( e );
+	} catch (InstantiationException e) {
+	    throw new ClosureException( e );
+	} catch (IllegalAccessException e) {
+	    throw new ClosureException( e );
 	}
-    }
-    
-    
-
-    /**
-     * A method to set the value of the functionAnnotation
-     * field within this object instance.
-     * @param functionAnnotation the functionAnnotation to set
-     */
-    public synchronized final void setFunctionAnnotation(Function functionAnnotation) {
-        // set the value of the this.functionAnnotation field only if the class loader is not busy
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
-	    throw new IllegalArgumentException("Class loader is busy at the moment!");
 	
-        this.functionAnnotation = functionAnnotation;
     }
 
-    /**
-     * A method to set the value of the currentMethod
-     * field within this object instance.
-     * @param currentMethod the currentMethod to set
-     */
-    public synchronized final void setCurrentMethod(Method currentMethod) {
-        // set the value of the this.currentMethod field
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
-	    throw new IllegalArgumentException("Class loader is busy at the moment!");
-	
-        this.currentMethod = currentMethod;
-    }
+
+
 
     /**
-     * A method to set the value of the targetInstance
-     * field within this object instance.
-     * @param targetInstance the targetInstance to set
+     * Provides the built target instance.
+     * @return
      */
-    public synchronized final void setTargetInstance(Object targetInstance) {
-        // set the value of the this.targetInstance field
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
-	    throw new IllegalArgumentException("Class loader is busy at the moment!");
-	
-        this.targetInstance = targetInstance;
+    public synchronized final Object getTargetInstance() {
+	return this.targetInstance;
     }
-    
-    
-    
-   
+
+
+
+
+  
+
     
 
 }

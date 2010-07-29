@@ -86,10 +86,25 @@ public class ClassLoaderUtils {
 	if( targetClass == null )
 	    throw new IllegalArgumentException(" Cannot compute a name without the class of the target object!" );
 	
+	return computePrivateTargetReferenceName( targetClass.getName() );
+	
+    }
+    
+    
+    /**
+     * Creates a reference name starting from the class name.
+     * The name is compound by the fully
+     * qualified name of the class with all the dots replaced with underscore, so for instance as <tt>jfk_example_myexample</tt>.
+     * We don't use here a numeric discriminator in the name because it can be useful to find out if the private refernce
+     * is already present is superclasses.
+     * @param className the name of the class to use
+     * @return the reference name
+     */
+    public static synchronized String computePrivateTargetReferenceName( String className ){
 	// compose the name
 	StringBuffer buffer = new StringBuffer(50);
 	
-	StringTokenizer tokenizer = new StringTokenizer( targetClass.getName(), "." );
+	StringTokenizer tokenizer = new StringTokenizer( className, "." );
 	while( tokenizer.hasMoreElements() ){
 	    buffer.append( "_" );
 	    buffer.append( tokenizer.nextToken() );
@@ -114,5 +129,24 @@ public class ClassLoaderUtils {
     public static synchronized String getSetTargetMethodName(){
 	return "__jfk_setTargetObject";
     }
+    
+    
+    /**
+     * Computes the name of a closure class to construct.
+     * @return the closure name
+     */
+    public static synchronized String computeClosureClassName(){
+	return "Closure_" + (++counter);
+    }
+    
+    /**
+     * Gets a class name for a closure class to be defined on the fly. The class name does not represent
+     * an existing class.
+     * @return the class name to implement
+     */
+    public static synchronized String getClosureClassName(){
+	return "jfk.function.ClosureTargetObject_" + (++counter);
+    }
+    
     
 }

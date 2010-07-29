@@ -189,15 +189,38 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		methodCode.append( "\n{\n\t" );
 		//methodCode.append( "System.out.println(\" method call on \" + "+ privateReferenceName + ");");
 		
+		
+		
 		// security checks: the method must receive the exact number of parameters!
-		if( this.currentMethod.getParameterTypes() != null && this.currentMethod.getParameterTypes().length > 0 ){
+		int requiredParameters = ( this.currentMethod.getParameterTypes() != null ? this.currentMethod.getParameterTypes().length : 0 );
+		if( requiredParameters > 0 ){
 		    methodCode.append(" if( param0 == null || param0.length != ");
 		    methodCode.append( this.currentMethod.getParameterTypes().length );
 		    methodCode.append( ")\n\t\t" );
 		    methodCode.append( "throw new ");
 		    methodCode.append( JFKException.class.getName() );
 		    methodCode.append( "(\"Bad method arity!\");\n\n");
+		    
+		    // another security check: the method must receive the exact type of the parameters
+		    Class parameterTypes[] = this.currentMethod.getParameterTypes();
+		    
+		    for( int checkNumber = 0; checkNumber < parameterTypes.length; checkNumber ++ ){
+			methodCode.append( "\n\t" );
+			methodCode.append( "if( ! param0[" );
+			methodCode.append( checkNumber );
+			methodCode.append( "].getClass().getName().equals( \"" );
+			methodCode.append( parameterTypes[checkNumber].getName() );
+			methodCode.append( "\") )" );
+			methodCode.append( "\n\t\t" );
+			methodCode.append( "throw new " );
+			methodCode.append( JFKException.class.getName() );
+			methodCode.append( "(\"Bad parameter type!\");\n\n");
+		    }
+		    
 		}
+		
+		
+		
 		
 		
 		methodCode.append( "\n\t" );

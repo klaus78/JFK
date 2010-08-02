@@ -153,8 +153,7 @@ public class DelegateManagerImpl implements IDelegateManager {
      */
     @Override
     public boolean addDelegate(IDelegatable source, IDelegate destination) {
-	// TODO Auto-generated method stub
-	return false;
+	return source.addDelegate(destination);
     }
 
     /* (non-Javadoc)
@@ -162,8 +161,7 @@ public class DelegateManagerImpl implements IDelegateManager {
      */
     @Override
     public boolean removeDelegate(IDelegatable source, IDelegate destination) {
-	// TODO Auto-generated method stub
-	return false;
+	return source.removeDelegate(destination);
     }
 
     @Override

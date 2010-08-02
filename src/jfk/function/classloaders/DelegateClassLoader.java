@@ -44,6 +44,7 @@ import javassist.CtMember;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+import jfk.function.IFunction;
 import jfk.function.delegates.IDelegatable;
 import jfk.function.delegates.IDelegate;
 import jfk.function.exception.delegates.AlreadyImplementedDelegateException;
@@ -203,6 +204,15 @@ public class DelegateClassLoader extends SecureClassLoader implements
 		    			   );
 	    delegatableCtClass.addField(mapField);
 	    
+	    // the list for the functions to bind at run-time
+	    String privateFunctionListName = ClassLoaderUtils.computePrivateListName( name );
+	    // add a new list member to contain all the functions
+	    CtField privateFunctionListCtField = new CtField( pool.get("java.util.List"),	// field type
+		    					privateFunctionListName,		// name of the field
+    							delegatableCtClass			// declaring class
+	    );
+	    delegatableCtClass.addField(privateFunctionListCtField);
+	    
 	    // now iterate on each connection I need to do
 	    for( ConnectionData currentConnectionData : this.connectionsToDo ){
 		// extract the data for this connection
@@ -285,20 +295,48 @@ public class DelegateClassLoader extends SecureClassLoader implements
 
 		methodCode.append(".");
 		methodCode.append( targetMethod.getName() );
+		
+		
+		StringBuffer parameterCode = new StringBuffer(500);
 		methodCode.append( "(" );
 		
 		for(int i = 0; targetParameters != null &&  i < targetParameters.length; i++){
 		    if( i > 0 )
-			methodCode.append(",");
+			parameterCode.append(",");
 		    
-		    methodCode.append( "(" );
-		    methodCode.append( targetParameters[i].getName() );
-		    methodCode.append( ") " );
-		    methodCode.append( " " );
-		    methodCode.append( "param" + i );
+		    parameterCode.append( "(" );
+		    parameterCode.append( targetParameters[i].getName() );
+		    parameterCode.append( ") " );
+		    parameterCode.append( " " );
+		    parameterCode.append( "param" + i );
 		}
 		
+		// copy the list of parameters to the method code
+		methodCode.append( parameterCode.toString() );
 		methodCode.append(");");
+		
+		
+		methodCode.append("\n\n\n\t");
+		
+		// now I've done the first connection, the others must be done
+		// using an iteration over the function list
+		methodCode.append(" try{\n\t\t" );
+		methodCode.append( "if( this." );
+		methodCode.append( privateFunctionListName );
+		methodCode.append( " != null )\n\t\t\t" );
+		methodCode.append( "for(int i = 0; i < " );
+		methodCode.append( privateFunctionListName );
+		methodCode.append( ".size(); i++)\n\t\t\t\t" );
+		methodCode.append( " ((jfk.function.IFunction) " );
+		methodCode.append( privateFunctionListName );
+		methodCode.append(".get(i) " );
+		methodCode.append( ").executeCall" );
+		methodCode.append( "( new Object[]{" );
+		methodCode.append( parameterCode.toString() );
+		methodCode.append( "} );");
+		methodCode.append( "\n\n\t" );
+		methodCode.append("}catch(Exception e){ }\n\n ");
+		
 		
 		// end of the body
 		methodCode.append("\n}\n");
@@ -344,6 +382,50 @@ public class DelegateClassLoader extends SecureClassLoader implements
 	    delegatableCtClass.addInterface( pool.get( IDelegatableInitializer.class.getName() ) );
 
 	    
+	    
+	    
+	    
+	    
+	    // I need to create the methods to add a new delegate and to remove one
+	    
+	    methodCode = new StringBuffer( 1000 );
+	    methodCode.append( "public boolean addDelegate( jfk.function.delegates.IDelegate delegateToAdd ){\n\t");
+	    methodCode.append("if( this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( " == null)\n\t\t" );
+	    methodCode.append( " this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( " = new java.util.LinkedList();\n\n\t");
+	    methodCode.append( "if( ! this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( ".contains(delegateToAdd) ){\n\t\t");
+	    methodCode.append( "this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( ".add(delegateToAdd);\n\t\t return true;\n\t}\n");
+	    methodCode.append("\telse return false;\n}\n");
+	    logger.debug("Creating the add delegate method\n" + methodCode.toString());
+	    CtMethod addDelegateMethod = CtMethod.make( methodCode.toString(), delegatableCtClass);
+	    delegatableCtClass.addMethod(addDelegateMethod);
+	    
+	    // create the remove delegate method
+	    methodCode = new StringBuffer( 1000 );
+	    methodCode.append( "public boolean removeDelegate( jfk.function.delegates.IDelegate delegateToRemove ){\n\t");
+	    methodCode.append("if( this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( " == null)\n\t\t return false;\n\n\t" );
+	    methodCode.append( "if(  this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( ".contains(delegateToRemove) ){\n\t\t");
+	    methodCode.append( "this." );
+	    methodCode.append( privateFunctionListName );
+	    methodCode.append( ".remove(delegateToRemove);\n\t\t return true;\n\t}\n");
+	    methodCode.append("\telse return false;\n}\n");
+	    logger.debug("Creating the remove delegate method\n" + methodCode.toString());
+	    CtMethod removeDelegateMethod = CtMethod.make( methodCode.toString(), delegatableCtClass);
+	    delegatableCtClass.addMethod(removeDelegateMethod);
+	    
+	    
+	    
 	    // all ready
 	    // now define the class
 	    bytecode = delegatableCtClass.toBytecode();
@@ -359,10 +441,13 @@ public class DelegateClassLoader extends SecureClassLoader implements
 
 	    
 	} catch (NotFoundException e) {
+	    logger.error("Not Found!", e);
 	    throw new ClassNotFoundException("Cannot load the delegatable class", e);
 	} catch (CannotCompileException e) {
+	    logger.error("Compilation error!", e);
 	    throw new ClassNotFoundException("Cannot compile the subclass", e);
 	} catch (CannotConnectDelegateException e) {
+	    logger.error("Delegate error!", e);
 	    throw new ClassNotFoundException("Cannot bind the delegate", e);
 	} catch (IOException e) {
 	    throw new ClassNotFoundException("Cannot generate the bytecode for the delegate", e);
@@ -388,9 +473,6 @@ public class DelegateClassLoader extends SecureClassLoader implements
     }
 
  
-    
-    
-    
-    
+  
     
 }

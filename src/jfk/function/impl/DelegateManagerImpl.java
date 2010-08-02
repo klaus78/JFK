@@ -24,6 +24,10 @@
  */
 package jfk.function.impl;
 
+import java.lang.reflect.Method;
+
+import jfk.function.delegates.Connect;
+import jfk.function.delegates.Delegate;
 import jfk.function.delegates.IDelegatable;
 import jfk.function.delegates.IDelegate;
 import jfk.function.delegates.IDelegateManager;
@@ -36,6 +40,10 @@ import jfk.function.exception.delegates.CannotConnectDelegateException;
  *
  */
 public class DelegateManagerImpl implements IDelegateManager {
+    
+    
+
+    
 
     /* (non-Javadoc)
      * @see jfk.function.delegates.IDelegateManager#createAndBind(java.lang.Class, jfk.function.delegates.IDelegate)
@@ -48,6 +56,72 @@ public class DelegateManagerImpl implements IDelegateManager {
 							       AlreadyImplementedDelegateException {
 	
 
+	
+	// the first thing to do is to check if the class has at least one delegatable method
+	boolean found = false;
+	for( Method delegatebleMethod : delegatableClass.getDeclaredMethods() ){
+	    // is the method annotated?
+	    if( delegatebleMethod.isAnnotationPresent( Delegate.class  ) ){
+		found = true;
+		break;
+	    }
+	}
+	
+	// if not found at least a method, throw an exception
+	if( ! found )
+	    throw new CannotConnectDelegateException( "No delegate method found!" );
+	
+	
+	// now check if the target object has at least one connect annotation
+	found = false;
+	for( Method connectMethod : delegateTarget.getClass().getDeclaredMethods() )
+	    if( connectMethod.isAnnotationPresent( Connect.class ) ){
+		found = true;
+		break;
+	    }
+	
+	
+	// if not found at least a method, throw an exception
+	if( ! found )
+	    throw new CannotConnectDelegateException( "No connect method found!" );
+	
+	
+	// if here both the target and the delegatable class have annotated methods, now I must check for
+	// each method in the delegate that a method with the same name and signature is in
+	// the target
+	for( Method delegatableMethod : delegatableClass.getDeclaredMethods() )
+	    if( delegatableMethod.isAnnotationPresent( Delegate.class ) ){
+		// get the annotation and its parameters
+		Delegate delegateAnnotation = delegatableMethod.getAnnotation( Delegate.class );
+		String delegateName   = delegateAnnotation.name();
+		boolean allowMultiple = delegateAnnotation.allowMultiple();
+		
+		// now iterate on the target to see if a method with the counterpart connect annotation
+		// can be found
+		found = false;
+		for( Method connectMethod : delegateTarget.getClass().getDeclaredMethods() )
+		    if( connectMethod.isAnnotationPresent( Connect.class ) ){
+			// get the annotation and check the parameters
+			Connect connectAnnotation = connectMethod.getAnnotation( Connect.class );
+			if( connectAnnotation.name().equals(delegateName) ){
+			    found = true;
+			    break;
+			}
+		    }
+		
+		
+		// if here and the connect method has not been found, throw an exception
+		if( ! found )
+		    throw new CannotConnectDelegateException("Delegate method " + delegatableMethod.getName() + " has not connection to any method!");
+	    }
+	
+	
+	
+	// if here both the delegate and the connecter can be bound, so I need to proceed to
+	// the implementation of the methods
+	
+	
+	
 	return new IDelegatable() {
 	    
 	    @Override

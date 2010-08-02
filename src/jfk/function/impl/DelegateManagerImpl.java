@@ -92,6 +92,8 @@ public class DelegateManagerImpl implements IDelegateManager {
 	
 	// get a new delegate builder
 	IDelegateConnector connector = JFK.getDelegateConnector();
+	// initialize the connector
+	connector.setDelegatableSource(delegatableClass);
 	
 	
 	
@@ -131,23 +133,7 @@ public class DelegateManagerImpl implements IDelegateManager {
 	
 	// if here both the delegate and the connecter can be bound, so I need to proceed to
 	// the implementation of the methods
-	
-	
-	
-	return new IDelegatable() {
-	    
-	    @Override
-	    public boolean removeDelegate(IDelegate delegateToRemove) {
-		// TODO Auto-generated method stub
-		return false;
-	    }
-	    
-	    @Override
-	    public boolean addDelegate(IDelegate delegateToAdd) {
-		// TODO Auto-generated method stub
-		return false;
-	    }
-	};
+	return connector.createDelegate();
     }
 
     /* (non-Javadoc)

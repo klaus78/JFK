@@ -22,21 +22,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package jfk.test;
+package jfk.function.impl;
 
-import jfk.function.delegates.Connect;
 import jfk.function.delegates.IDelegate;
 
 /**
- * A good event consumer for delegates.
+ * An interface used to initialize a delegatable object. This interface associates the object on which a method
+ * must be called as target.
  * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
  *
  */
-public class EventConsumer implements IDelegate{
+public interface IDelegatableInitializer {
 
-
-    @Connect( name="event" )
-    public void consumeEvent(String event){
-	System.out.println("\n\t********** Cosuming event " + event + "\n\n\n");
-    }
+    /**
+     * Associates the target to the specified key for its retrivial.
+     * @param key
+     * @param param
+     */
+    public void _setPrivateTarget(String key, IDelegate param);
 }

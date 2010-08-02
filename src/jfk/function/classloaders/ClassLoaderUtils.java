@@ -104,11 +104,7 @@ public class ClassLoaderUtils {
 	// compose the name
 	StringBuffer buffer = new StringBuffer(50);
 	
-	StringTokenizer tokenizer = new StringTokenizer( className, "." );
-	while( tokenizer.hasMoreElements() ){
-	    buffer.append( "_" );
-	    buffer.append( tokenizer.nextToken() );
-	}
+	normalizeClassName(className, buffer);
 	
 	if( buffer.length() == 0 )
 	    buffer.append("_unknwon");
@@ -119,6 +115,20 @@ public class ClassLoaderUtils {
 	
 	// all done
 	return buffer.toString();
+    }
+
+
+    /**
+     * Changes the '.' in a class name with a '_'.
+     * @param className the name of the class
+     * @param buffer the buffer to use
+     */
+    private final static void normalizeClassName(String className, StringBuffer buffer) {
+	StringTokenizer tokenizer = new StringTokenizer( className, "." );
+	while( tokenizer.hasMoreElements() ){
+	    buffer.append( "_" );
+	    buffer.append( tokenizer.nextToken() );
+	}
     }
     
 
@@ -159,6 +169,23 @@ public class ClassLoaderUtils {
      */
     public static synchronized String getDelegateClassName( String originalName ){
 	return originalName + "_impl_" +  (++counter);
+    }
+
+
+    /**
+     * Creates the name of a private list to keep functions.
+     * @param name the name of a class
+     * @return the name to use as a private reference for the list of functions
+     */
+    public static synchronized String computePrivateListName(String name) {
+	if( name == null || name.length() < 0 )
+	    throw new IllegalArgumentException( "Empty or invalid name!" );
+	
+	StringBuffer buffer = new StringBuffer(50);
+	normalizeClassName(name, buffer);
+	buffer.append("_privateFunctionList_");
+	buffer.append( ++counter );
+	return buffer.toString();
     }
     
     

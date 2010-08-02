@@ -35,6 +35,9 @@ import jfk.function.IFunctionBuilder;
 import jfk.function.JFKException;
 import jfk.function.classloaders.IFunctionBinder;
 import jfk.function.classloaders.IFunctionClassDefiner;
+import jfk.function.delegates.Connect;
+import jfk.function.delegates.Delegate;
+import jfk.function.delegates.IDelegate;
 import jfk.function.exception.CannotBindFunctionException;
 
 /**
@@ -113,6 +116,60 @@ public class FunctionBuilderImpl implements IFunctionBuilder {
 
 
     
+    
+    /**
+     * Creates the binding for a delegate, that is on a delegate annotation.
+     * @param target
+     * @param name
+     * @return
+     * @throws CannotBindFunctionException
+     */
+    public IFunction bindDelegateFunction(IDelegate target, String name )  throws CannotBindFunctionException {
+    
+	// check arguments
+	if( target == null || name == null || name.length() < 0 )
+	    throw new CannotBindFunctionException("Cannot bind the method call to a function on " + target.getClass() + " for identifier " + name);
+	
+	
+	// now iterate on each public method to see if one of the target object has the annotation
+	// of a function with the specified name, and in such case prepare to get the function object
+	for( Method currentMethod : target.getClass().getMethods() )
+	    if( currentMethod.isAnnotationPresent( Connect.class ) ){
+		Connect functionAnnotation = currentMethod.getAnnotation( Connect.class );
+		
+		
+		
+		if( functionAnnotation.name().equals( name ) ){
+		    // ok, this method must be mapped as a function!!    
+		    
+		    try {
+			// get a new function definer and build the function
+			IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
+			Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
+			
+			// now create the instance
+			IFunction function = (IFunction) functionClass.newInstance();
+			
+			// set the target object
+			((IFunctionBinder) function ).setTargetObject(target);
+			
+			// all done
+			return function;
+			
+		    } catch (Exception e){
+			e.printStackTrace();
+			throw new CannotBindFunctionException("Cannot create the function object ", e);
+		    }
+		}
+		    
+	    }
+	
+	
+	// if here there is no method to map as a function
+	throw new CannotBindFunctionException("No method found to be mapped as " + name + " on " + target.getClass() );
+	
+	
+    }
     
     
 }

@@ -39,10 +39,11 @@ public interface IDelegatable {
      * Adds the target delegate to this object. When attaching a new delegate, the delegate will be "scanned" to see
      * which methods must be attached to which delegatable methods of this object.
      * @param delegateToAdd the delegate target to add
+     * @param name the name of the connection to establish (i.e., the name of the connection annotation)
      * @return true if the delegate has been added, false if the delegate cannot be add (e.g., it is already attached
      * or it does not include any method to attach)
      */
-    public boolean addDelegate( IDelegate delegateToAdd );
+    public boolean addDelegate( IDelegate delegateToAdd, String name );
     
     
     /**

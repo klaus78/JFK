@@ -24,6 +24,7 @@
  */
 package jfk.core;
 
+import jfk.function.IClosureBuilder;
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
 import jfk.function.classloaders.IDelegateConnector;
@@ -95,6 +96,15 @@ public class JFK {
      */
     public static synchronized IDelegateConnector getDelegateConnector() {
 	return (IDelegateConnector) xmlBeanFactory.getBean( IDelegateConnector.class );
+    }
+
+
+    /**
+     * Provides the default closure builder for this configuration.
+     * @return the closure builder for the configuration
+     */
+    public synchronized static IClosureBuilder getClosureBuilder() {
+	return (IClosureBuilder) xmlBeanFactory.getBean( IClosureBuilder.class );
     }
     
 

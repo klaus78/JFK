@@ -42,6 +42,7 @@ import javassist.NotFoundException;
 import jfk.function.Function;
 import jfk.function.IFunction;
 import jfk.function.JFKException;
+import jfk.function.delegates.Connect;
 import jfk.function.exception.BadArityException;
 import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.CannotBindFunctionException;
@@ -92,6 +93,18 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
      */
     protected ClassLoaderStatus status = ClassLoaderStatus.READY;
 
+    
+    /**
+     * The connect annotation in the case this is a delegate.
+     */
+    private Connect connectAnnotation;
+
+    /**
+     * The name (i.e., the ID) of the method to connect to the function, that is the one that is specified in
+     * the annotation of the method.
+     */
+    private String functionNameFromAnnotation;
+
     /* (non-Javadoc)
      * @see java.lang.ClassLoader#findClass(java.lang.String)
      */
@@ -118,7 +131,7 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    byte[] bytecode = null;
 	    
 	    // I have to compute a name for the class to implement.
-	    String functionClassName = ClassLoaderUtils.computeFunctionClassName( this.functionAnnotation, this.targetInstance.getClass() );
+	    String functionClassName = ClassLoaderUtils.computeFunctionClassName( this.functionNameFromAnnotation, this.targetInstance.getClass() );
 	    logger.debug("The new function class name is " + functionClassName );
 	    
 	    // create a new class for the specified name
@@ -448,16 +461,25 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    if( targetObject == null || targetMethod == null )
 		throw new IllegalArgumentException("Cannot proceed without the method and the target object");
 	    
-	    if( ! targetMethod.isAnnotationPresent( Function.class ) )
-		throw new CannotBindFunctionException("The specified method is not a function annotated one!");
+	    if( (! targetMethod.isAnnotationPresent( Function.class )) && (! targetMethod.isAnnotationPresent(Connect.class))   )
+		throw new CannotBindFunctionException("The specified method is not a function/connect annotated one!");
 	    
-	    // get the annotation from the method
-	    Function functionAnnotation = targetMethod.getAnnotation( Function.class );
+	    // get the annotation name and parameters
+	    if( targetMethod.isAnnotationPresent( Function.class) ){
+		Function functionAnnotation = targetMethod.getAnnotation( Function.class );
+		this.functionAnnotation = functionAnnotation;
+		this.functionNameFromAnnotation = functionAnnotation.name();
+	    }
+	    else if( targetMethod.isAnnotationPresent( Connect.class ) ){
+		Connect connectAnnotation = targetMethod.getAnnotation( Connect.class );
+		this.connectAnnotation = connectAnnotation;
+		this.functionNameFromAnnotation = connectAnnotation.name();
+	    }
 	    
 	    // set the parameters for the loader
 	    this.currentMethod = targetMethod;
 	    this.targetInstance = targetObject;
-	    this.functionAnnotation = functionAnnotation;
+
 	    
 	    // define the class
 	    return this.findClass( IFunction.class.getName() );

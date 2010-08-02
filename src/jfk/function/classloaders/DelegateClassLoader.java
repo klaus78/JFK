@@ -44,7 +44,10 @@ import javassist.CtMember;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+import jfk.core.JFK;
 import jfk.function.IFunction;
+import jfk.function.IFunctionBuilder;
+import jfk.function.delegates.Connect;
 import jfk.function.delegates.IDelegatable;
 import jfk.function.delegates.IDelegate;
 import jfk.function.exception.delegates.AlreadyImplementedDelegateException;
@@ -82,6 +85,7 @@ public class DelegateClassLoader extends SecureClassLoader implements
 	public Method targetMethod = null;
 	public IDelegate targetInstance = null;
 	public String privateReferenceKey = null;
+	public String annotationMethodName = null;
     }
     
     
@@ -123,6 +127,11 @@ public class DelegateClassLoader extends SecureClassLoader implements
 	    data.sourceMethod   = sourceMethod;
 	    data.targetInstance = targetInstance;
 	    data.targetMethod   = targetMethod;
+	    
+	    // get the annotation and store the method id
+	    Connect connectAnnotation = targetMethod.getAnnotation( Connect.class );
+	    data.annotationMethodName = connectAnnotation.name();
+	    
 	    this.connectionsToDo.add(data);
 	    return true;
 	}
@@ -389,7 +398,7 @@ public class DelegateClassLoader extends SecureClassLoader implements
 	    // I need to create the methods to add a new delegate and to remove one
 	    
 	    methodCode = new StringBuffer( 1000 );
-	    methodCode.append( "public boolean addDelegate( jfk.function.delegates.IDelegate delegateToAdd ){\n\t");
+	    methodCode.append( "public boolean addDelegate( jfk.function.delegates.IDelegate delegateToAdd, String name ){\n\t");
 	    methodCode.append("if( this." );
 	    methodCode.append( privateFunctionListName );
 	    methodCode.append( " == null)\n\t\t" );
@@ -401,7 +410,12 @@ public class DelegateClassLoader extends SecureClassLoader implements
 	    methodCode.append( ".contains(delegateToAdd) ){\n\t\t");
 	    methodCode.append( "this." );
 	    methodCode.append( privateFunctionListName );
-	    methodCode.append( ".add(delegateToAdd);\n\t\t return true;\n\t}\n");
+	    methodCode.append( ".add( ");
+	    // I have to build a function for this target
+	    methodCode.append( " jfk.core.JFK.getFunctionBuilder().bindDelegateFunction(delegateToAdd, name  ) " );
+	    
+	    methodCode.append(" );\n\t\t return true;\n\t}\n" );
+
 	    methodCode.append("\telse return false;\n}\n");
 	    logger.debug("Creating the add delegate method\n" + methodCode.toString());
 	    CtMethod addDelegateMethod = CtMethod.make( methodCode.toString(), delegatableCtClass);

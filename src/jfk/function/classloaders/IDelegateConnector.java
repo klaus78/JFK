@@ -55,4 +55,12 @@ public interface IDelegateConnector {
      * @throws AlreadyImplementedDelegateException
      */
     public IDelegatable createDelegate() throws CannotConnectDelegateException, AlreadyImplementedDelegateException;
+    
+    
+    /**
+     * Sets the source for this connector.
+     * @param source the delegatable class that must be instantied
+     */
+    public void setDelegatableSource( Class source );
+    
 }

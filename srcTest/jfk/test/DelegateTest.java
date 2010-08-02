@@ -25,6 +25,8 @@
 package jfk.test;
 
 
+import java.lang.reflect.Method;
+
 import jfk.core.JFK;
 import jfk.function.delegates.IDelegatable;
 import jfk.function.delegates.IDelegate;
@@ -77,6 +79,12 @@ public class DelegateTest {
 	
 	// this should pass
 	IDelegatable consumer = (IDelegatable) manager.createAndBind( EventGenerator.class, new EventConsumer() );
+	
+	System.out.println("Class instance " + consumer.getClass() );
+	for( Method m : consumer.getClass().getDeclaredMethods() )
+	    System.out.println("Method -> " + m.getName());
+	
+	((EventGenerator) consumer).notifyEvent("Hello Event!");
 	
 	
     }

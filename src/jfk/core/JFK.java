@@ -27,6 +27,7 @@ package jfk.core;
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
 import jfk.function.classloaders.IFunctionClassDefiner;
+import jfk.function.delegates.IDelegateManager;
 
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -76,6 +77,14 @@ public class JFK {
 	return xmlBeanFactory.getBean( clazz.getSimpleName() );
     }
     
+    
+    /**
+     * Provides the default delegate manager to use in this configuration.
+     * @return the delegate manager to use
+     */
+    public static synchronized IDelegateManager getDelegateManager(){
+	return (IDelegateManager) xmlBeanFactory.getBean( IDelegateManager.class );
+    }
     
 
 }

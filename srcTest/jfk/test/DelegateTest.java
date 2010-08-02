@@ -26,7 +26,11 @@ package jfk.test;
 
 
 import jfk.core.JFK;
+import jfk.function.delegates.IDelegatable;
+import jfk.function.delegates.IDelegate;
 import jfk.function.delegates.IDelegateManager;
+import jfk.function.exception.delegates.AlreadyImplementedDelegateException;
+import jfk.function.exception.delegates.CannotConnectDelegateException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +52,7 @@ public class DelegateTest {
 
     
     @Test
-    public void testDelegateManager(){
+    public void testDelegateManager() throws CannotConnectDelegateException, AlreadyImplementedDelegateException{
 	
 	// get a new delegate manager
 	IDelegateManager manager = JFK.getDelegateManager();
@@ -56,6 +60,24 @@ public class DelegateTest {
 	// the delegate manager cannot be null
 	if( manager == null )
 	    fail("Cannot obtain a delegate manager");
+	
+	
+	// this should fail, since the bad event consumer has not the right annotation
+	try {
+	    manager.createAndBind( EventGenerator.class, new BadEventConsumer() );
+	    fail("Creating a bad delegate definition????");
+	} catch (CannotConnectDelegateException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (AlreadyImplementedDelegateException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	}
+	
+	
+	// this should pass
+	IDelegatable consumer = (IDelegatable) manager.createAndBind( EventGenerator.class, new EventConsumer() );
+	
 	
     }
     

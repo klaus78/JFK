@@ -28,18 +28,14 @@ import jfk.function.delegates.Connect;
 import jfk.function.delegates.IDelegate;
 
 /**
- * A good event consumer for delegates.
+ * A delegate for a secon test.
  * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
  *
  */
-public class EventConsumer implements IDelegate{
-
+public class EventConsumer2 implements IDelegate {
 
     @Connect( name="event" )
-    public void consumeEvent(String event){
-	System.out.println("\n\t********** Cosuming event " + event + "\n\n\n");
+    public void consumeEvent2( String e ){
+	System.out.println("\n\t**********>>>>>>> Cosuming event " + e + "\n\n\n");
     }
-    
-   
 }
-

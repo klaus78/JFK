@@ -99,6 +99,10 @@ public class DelegateTest {
 	consumer = (IDelegatable) manager.createAndBind( EventGenerator.class, new EventConsumer() );
 	((EventGenerator) consumer).notifyEvent("Hello Event2!");
 	
+	// add a new delegate
+	manager.addDelegate(consumer,  new EventConsumer2() );
+	((EventGenerator) consumer).notifyEvent("Hello Event3!");
+	
 	
     }
     

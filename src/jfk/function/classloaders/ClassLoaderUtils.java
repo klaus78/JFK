@@ -58,19 +58,31 @@ public class ClassLoaderUtils {
 	if( functionAnnotation == null || targetClass == null )
 	    throw new IllegalArgumentException("Cannot compute a name without the class of the target object and/or the function annotation!" );
 	
-	StringBuffer buffer = new StringBuffer(50);
+	return computeFunctionClassName( functionAnnotation.name(), targetClass);
 	
+    }
+    
+    /**
+     * Computes the name of the class to be defined within the function.
+     * @param nameFromTheAnnotation
+     * @param targetClass
+     * @return
+     */
+    public static synchronized String computeFunctionClassName( String nameFromTheAnnotation, Class targetClass ){
+	StringBuffer buffer = new StringBuffer(50);
+
 	// the name of the class to build will be the composition of the simple name of the
 	// target class name and the name of the annotation
 	buffer.append( targetClass.getSimpleName() );
 	buffer.append( "_" );
-	buffer.append( functionAnnotation.name() );
+	buffer.append( nameFromTheAnnotation );
 	buffer.append( "_" );
 	buffer.append( ++counter );
-	
+
 	// all done
 	return buffer.toString();
     }
+    
     
     
     /**

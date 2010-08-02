@@ -153,7 +153,19 @@ public class DelegateManagerImpl implements IDelegateManager {
      */
     @Override
     public boolean addDelegate(IDelegatable source, IDelegate destination) {
-	return source.addDelegate(destination);
+	// check arguments
+	if( source == null || destination == null )
+	    return false;
+	
+	// see in the destination which connections there are
+	for( Method currentMethod : destination.getClass().getDeclaredMethods() )
+	    if( currentMethod.isAnnotationPresent( Connect.class ) ){
+		Connect annotation = currentMethod.getAnnotation( Connect.class );
+		source.addDelegate(destination,  annotation.name() );
+	    }
+	
+	return true;
+	
     }
 
     /* (non-Javadoc)

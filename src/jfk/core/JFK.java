@@ -26,6 +26,7 @@ package jfk.core;
 
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
+import jfk.function.classloaders.IDelegateConnector;
 import jfk.function.classloaders.IFunctionClassDefiner;
 import jfk.function.delegates.IDelegateManager;
 
@@ -84,6 +85,16 @@ public class JFK {
      */
     public static synchronized IDelegateManager getDelegateManager(){
 	return (IDelegateManager) xmlBeanFactory.getBean( IDelegateManager.class );
+    }
+
+
+    /**
+     * Provides the default delegate connector, that is the special class loader used
+     * to implement a delegate.
+     * @return the delegate connector
+     */
+    public static synchronized IDelegateConnector getDelegateConnector() {
+	return (IDelegateConnector) xmlBeanFactory.getBean( IDelegateConnector.class );
     }
     
 

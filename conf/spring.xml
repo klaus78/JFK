@@ -29,5 +29,11 @@
 	<bean id="IDelegateManager" class="jfk.function.impl.DelegateManagerImpl"
 		scope="singleton">
    	</bean>
+   	
+   	<!-- the default delegate connector to use -->
+	<bean id="IDelegateConnector" class="jfk.function.classloaders.DelegateClassLoader"
+		scope="prototype">
+   	</bean>
+   	
 
 </beans>

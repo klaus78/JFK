@@ -26,6 +26,8 @@ package jfk.function.impl;
 
 import java.lang.reflect.Method;
 
+import jfk.core.JFK;
+import jfk.function.classloaders.IDelegateConnector;
 import jfk.function.delegates.Connect;
 import jfk.function.delegates.Delegate;
 import jfk.function.delegates.IDelegatable;
@@ -41,6 +43,8 @@ import jfk.function.exception.delegates.CannotConnectDelegateException;
  */
 public class DelegateManagerImpl implements IDelegateManager {
     
+    
+
     
 
     
@@ -86,6 +90,11 @@ public class DelegateManagerImpl implements IDelegateManager {
 	    throw new CannotConnectDelegateException( "No connect method found!" );
 	
 	
+	// get a new delegate builder
+	IDelegateConnector connector = JFK.getDelegateConnector();
+	
+	
+	
 	// if here both the target and the delegatable class have annotated methods, now I must check for
 	// each method in the delegate that a method with the same name and signature is in
 	// the target
@@ -105,7 +114,10 @@ public class DelegateManagerImpl implements IDelegateManager {
 			Connect connectAnnotation = connectMethod.getAnnotation( Connect.class );
 			if( connectAnnotation.name().equals(delegateName) ){
 			    found = true;
-			    break;
+			    
+			    // add this method connection
+			    connector.prepareConnection(delegatableMethod, connectMethod, delegateTarget);
+			    
 			}
 		    }
 		

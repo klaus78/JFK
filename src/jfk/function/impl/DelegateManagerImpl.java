@@ -25,6 +25,8 @@
 package jfk.function.impl;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 import jfk.core.JFK;
 import jfk.function.classloaders.IDelegateConnector;
@@ -45,6 +47,10 @@ public class DelegateManagerImpl implements IDelegateManager {
     
     
 
+    /**
+     * A map with the already built delegates, so that they can be reused.
+     */
+    private Map<Class, IDelegatable> delegatles = new HashMap<Class, IDelegatable>();
     
 
     
@@ -53,13 +59,17 @@ public class DelegateManagerImpl implements IDelegateManager {
      * @see jfk.function.delegates.IDelegateManager#createAndBind(java.lang.Class, jfk.function.delegates.IDelegate)
      */
     @Override
-    public IDelegatable createAndBind(
+    public synchronized IDelegatable createAndBind(
 				      Class delegatableClass,
 				      IDelegate delegateTarget)
 							       throws CannotConnectDelegateException,
 							       AlreadyImplementedDelegateException {
 	
 
+	// check if the delegate has been already defined
+	if( this.delegatles.containsKey(delegatableClass) )
+	    throw new AlreadyImplementedDelegateException("Cannot redefine an already implemented delegate!\nHint: forgot the delegate");
+	
 	
 	// the first thing to do is to check if the class has at least one delegatable method
 	boolean found = false;
@@ -133,7 +143,9 @@ public class DelegateManagerImpl implements IDelegateManager {
 	
 	// if here both the delegate and the connecter can be bound, so I need to proceed to
 	// the implementation of the methods
-	return connector.createDelegate();
+	IDelegatable instance = connector.createDelegate();
+	this.delegatles.put(delegatableClass, instance);
+	return instance;
     }
 
     /* (non-Javadoc)
@@ -152,6 +164,12 @@ public class DelegateManagerImpl implements IDelegateManager {
     public boolean removeDelegate(IDelegatable source, IDelegate destination) {
 	// TODO Auto-generated method stub
 	return false;
+    }
+
+    @Override
+    public synchronized void forgetDelegatable(Class source) {
+	this.delegatles.remove(source);
+	
     }
 
 }

@@ -24,5 +24,10 @@
    	<bean id="IClosureBuilder" class="jfk.function.impl.ClosureBuilderImpl"
 		scope="prototype">
    	</bean>
+   	
+   	<!-- the default delegate manager to use -->
+	<bean id="IDelegateManager" class="jfk.function.impl.DelegateManagerImpl"
+		scope="singleton">
+   	</bean>
 
 </beans>

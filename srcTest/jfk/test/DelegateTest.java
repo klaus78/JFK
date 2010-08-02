@@ -33,6 +33,7 @@ import jfk.function.delegates.IDelegate;
 import jfk.function.delegates.IDelegateManager;
 import jfk.function.exception.delegates.AlreadyImplementedDelegateException;
 import jfk.function.exception.delegates.CannotConnectDelegateException;
+import jfk.function.exception.delegates.DelegateException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -85,6 +86,18 @@ public class DelegateTest {
 	    System.out.println("Method -> " + m.getName());
 	
 	((EventGenerator) consumer).notifyEvent("Hello Event!");
+	
+	
+	// this should fail: duplicating the same delegate
+	try{
+	    IDelegatable consumer2 = (IDelegatable) manager.createAndBind( EventGenerator.class, new EventConsumer() );
+	    fail("Allowing duplicated delegates definition within a forgot!");
+	}catch(DelegateException e){}
+	
+	// this should pass
+	manager.forgetDelegatable( EventGenerator.class );
+	consumer = (IDelegatable) manager.createAndBind( EventGenerator.class, new EventConsumer() );
+	((EventGenerator) consumer).notifyEvent("Hello Event2!");
 	
 	
     }

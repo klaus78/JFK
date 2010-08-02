@@ -64,4 +64,11 @@ public interface IDelegateManager {
      * @return true if the delegate has been removed
      */
     public boolean removeDelegate( IDelegatable source, IDelegate destination );
+    
+    
+    /**
+     * A method to forget a delegatable object, that is to allow a new creation of the same delegate with different binds.
+     * @param source the source to delete
+     */
+    public void forgetDelegatable( Class source );
 }

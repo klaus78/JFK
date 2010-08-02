@@ -121,6 +121,9 @@ public class ClassLoaderUtils {
 	return buffer.toString();
     }
     
+
+   
+    
     
     /**
      * Provide a standard name for the set target object method.
@@ -147,6 +150,19 @@ public class ClassLoaderUtils {
     public static synchronized String getClosureClassName(){
 	return "jfk.function.ClosureTargetObject_" + (++counter);
     }
+    
+    
+    /**
+     * Provides a name for the subclass delegate class name.
+     * @param originalName the name of the superclass, the original class name
+     * @return the name to use when defining the subclass
+     */
+    public static synchronized String getDelegateClassName( String originalName ){
+	return originalName + "_impl_" +  (++counter);
+    }
+    
+    
+  
     
     
 }

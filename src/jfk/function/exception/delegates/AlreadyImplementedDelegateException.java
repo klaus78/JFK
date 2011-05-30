@@ -6,7 +6,7 @@
  * and C# delegates in Java, doing all the bindings and reference resolution at run-time being able,
  * at the same time, being able to compile the program using a function-first-class entity and abstraction.
  *
- * Copyright (C) Luca Ferrari 2010-2011 - cat4hire@users.sourceforge.net
+ * Copyright (C) Luca Ferrari 2010-2011 - fluca1978 (at) gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ package jfk.function.exception.delegates;
  * An exception to indicate that the user is trying to attach an already implemented method to
  * a delegate. The rule is that a delegate method must be abstract, because its implementation must be obtained
  * at run-time.
- * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
+ * @author Luca Ferrari - fluca1978 (at) gmail.com
  *
  */
 public class AlreadyImplementedDelegateException extends DelegateException {

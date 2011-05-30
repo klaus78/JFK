@@ -6,7 +6,7 @@
  * and C# delegates in Java, doing all the bindings and reference resolution at run-time being able,
  * at the same time, being able to compile the program using a function-first-class entity and abstraction.
  *
- * Copyright (C) Luca Ferrari 2010-2011 - cat4hire@users.sourceforge.net
+ * Copyright (C) Luca Ferrari 2010-2011 - fluca1978 (at) gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ import jfk.function.exception.CannotBindFunctionException;
  * Implementations of this interface must provide a protocol and a policy to build
  * the method/function binding, for instance using reflection, direct access, etc.
  * 
- * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
+ * @author Luca Ferrari - fluca1978 (at) gmail.com
  *
  */
 public interface IFunctionBuilder {

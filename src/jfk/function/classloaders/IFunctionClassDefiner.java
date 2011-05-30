@@ -6,7 +6,7 @@ import jfk.function.JFKException;
 
 /**
  * An interface that abstracts the function builder using a class loader.
- * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
+ * @author Luca Ferrari - fluca1978 (at) gmail.com
  *
  */
 public interface IFunctionClassDefiner {

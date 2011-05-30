@@ -6,7 +6,7 @@
  * and C# delegates in Java, doing all the bindings and reference resolution at run-time being able,
  * at the same time, being able to compile the program using a function-first-class entity and abstraction.
  *
- * Copyright (C) Luca Ferrari 2010-2011 - cat4hire@users.sourceforge.net
+ * Copyright (C) Luca Ferrari 2010-2011 - fluca1978 (at) gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ package jfk.function.exception.delegates;
 /**
  * An exception to indicate that a method cannot be used as a delegate implementation, for instance because
  * the number of parameters is wrong, or the method does not have the right signature.
- * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
+ * @author Luca Ferrari - fluca1978 (at) gmail.com
  *
  */
 public class CannotConnectDelegateException extends DelegateException {

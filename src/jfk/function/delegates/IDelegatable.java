@@ -6,7 +6,7 @@
  * and C# delegates in Java, doing all the bindings and reference resolution at run-time being able,
  * at the same time, being able to compile the program using a function-first-class entity and abstraction.
  *
- * Copyright (C) Luca Ferrari 2010-2011 - cat4hire@users.sourceforge.net
+ * Copyright (C) Luca Ferrari 2010-2011 - fluca1978 (at) gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ package jfk.function.delegates;
  * This interfaces only defines the methods to add/remove a new delegate, such methods must remain abstract since they
  * will be implemented at run-time. Making the class abstract is good, since the rule is that every delegatable method
  * must be kept abstract.
- * @author Luca Ferrari - cat4hire (at) users.sourceforge.net
+ * @author Luca Ferrari - fluca1978 (at) gmail.com
  *
  */
 public interface IDelegatable {

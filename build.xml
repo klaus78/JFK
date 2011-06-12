@@ -67,6 +67,10 @@
      <!-- create the directory for the test runners -->
      <mkdir dir="${outputDir.tests}" />
 
+     <echo>
+       The reports of the test suite will be available into the
+       directory ${outputDir.tests} as text files.
+     </echo>
 
      <!-- run the tests -->
      <junit printsummary="yes" fork="yes" haltonfailure="no">
@@ -91,6 +95,15 @@
 
      </junit>
 
+   </target>
+
+
+   <target name="dist" depends="compile" >
+     <jar destfile="${distDir}/JFK.jar"
+	  basedir="${buildDir}"
+	  excludes="${buildDir}/**/*Test.class"
+	  >
+     </jar>
    </target>
 
 

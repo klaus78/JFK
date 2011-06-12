@@ -23,8 +23,9 @@
      </echo>
      
      <!-- remove the build folders -->
-     <delete dir="${buildDir}" />
-     <delete dir="${distDir}"  />
+     <delete dir="${buildDir}"        />
+     <delete dir="${distDir}"         />
+     <delete dir="${outputDir.tests}" />
 
      <!-- create the folders -->
      <mkdir dir="${buildDir}" />

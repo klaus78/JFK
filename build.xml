@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+
+<project name="JFK" default="compile" basedir=".">
+   
+  <!-- source folder -->
+   <property name="srcDir" value="src" />
+   <!-- source test folder -->
+   <property name="srcTestDir" value="srcTest" />
+   <!-- compile target folder -->
+   <property name="buildDir" value="classes" />
+   <!-- final jar folder -->
+   <property name="distDir"  value="dist"    />
+   <!-- a directory to collect the tests and other output stuff -->
+   <property name="outputDir.tests" value="reports" />
+   <!-- the configuration directory -->
+   <property name="confDir"         value="conf"    />
+
+   
+   <!-- initialize environment -->
+   <target name="init" >
+     <echo>
+       Java Functional Kernel (JFK)
+     </echo>
+     
+     <!-- remove the build folders -->
+     <delete dir="${buildDir}" />
+     <delete dir="${distDir}"  />
+
+     <!-- create the folders -->
+     <mkdir dir="${buildDir}" />
+     <mkdir dir="${distDir}"  />
+   </target>
+
+
+   <!-- compilation of all the sources -->
+   <target name="compile" depends="init" >
+     <javac srcdir="${srcDir}"
+	    destdir="${buildDir}"
+	    >
+
+       <classpath>
+	 <fileset dir="lib">
+	   <include name="**/*.jar" />
+	 </fileset>
+       </classpath>
+
+     </javac>
+   </target>
+ 
+
+   <!-- compile and run tests -->
+   <target name="test" depends="compile" >
+     <!-- compile all the tests -->
+     <javac srcdir="${srcTestDir}"
+	    destdir="${buildDir}"
+	    >
+
+       <classpath>
+	 <fileset dir="lib">
+	   <include name="**/*.jar" />
+	 </fileset>
+       </classpath>
+
+     </javac>
+
+
+     <!-- create the directory for the test runners -->
+     <mkdir dir="${outputDir.tests}" />
+
+
+     <!-- run the tests -->
+     <junit printsummary="yes" fork="yes" haltonfailure="no">
+       <formatter type="plain"/>
+
+       
+       <classpath>
+	 <fileset dir="lib">
+	   <include name="**/*.jar" />
+	 </fileset>
+	 <pathelement location="${buildDir}" />
+	 <pathelement location="${confDir}"  />
+       </classpath>
+       
+
+
+       <batchtest fork="yes" todir="${outputDir.tests}">
+	 <fileset dir="${srcTestDir}">
+	   <include name="**/*Test*.java"/>
+	 </fileset>
+       </batchtest>
+
+     </junit>
+
+   </target>
+
+
+</project>

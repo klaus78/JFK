@@ -52,7 +52,7 @@ public class JFK {
 	 // configure the spring resource in order to get it available for the
         // beans configurations. Please note that the configuration file must be
 	// in the classpath.
-        String springConfigurationPath = "spring.xml";
+        String springConfigurationPath = "jfk.spring-beans.xml";
         ClassPathResource classPathResource = new ClassPathResource( springConfigurationPath );
         xmlBeanFactory = new XmlBeanFactory(classPathResource);
     }

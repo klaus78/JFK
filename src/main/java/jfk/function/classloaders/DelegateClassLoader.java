@@ -70,7 +70,7 @@ public class DelegateClassLoader extends SecureClassLoader implements
     
     // configure the logger
     static{
-	DOMConfigurator.configure("conf/log4j.xml");
+	DOMConfigurator.configure("jfk.log4j.xml");
     }
     
     

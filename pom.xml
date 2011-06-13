@@ -30,6 +30,11 @@
     <testResources>
       <testResource>
 	<directory>src/main/resources</directory>
+	<includes>
+	  <include>jfk.log4j.xml</include>
+	  <include>jfk.spring-beans.xml</include>
+	</includes>
+
       </testResource>
     </testResources>
     

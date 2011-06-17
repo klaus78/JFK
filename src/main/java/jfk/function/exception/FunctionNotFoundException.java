@@ -46,7 +46,7 @@ public class FunctionNotFoundException extends JFKException {
     /**
      * @param message
      */
-    public FunctionNotFoundException(String message) {
+    public FunctionNotFoundException(final String message) {
 	super(message);
     }
 

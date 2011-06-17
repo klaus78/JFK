@@ -25,8 +25,6 @@
 package jfk.function.classloaders;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.security.SecureClassLoader;
 
@@ -35,10 +33,8 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtField;
-import javassist.CtMember;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-
 import jfk.function.Function;
 import jfk.function.IFunction;
 import jfk.function.JFKException;
@@ -66,38 +62,28 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
      * The logger for this class loader.
      */
     protected static Logger logger = org.apache.log4j.Logger.getLogger( FunctionClassLoader.class );
-    
+
     // configure the logger
     static{
 	DOMConfigurator.configure("jfk.log4j.xml");
     }
-    
-    
-    /**
-     * The function annotation this class loader is working on.
-     */
-    private Function functionAnnotation = null;
-    
+
+
     /**
      * The method to which the function will be bound.
      */
     protected Method currentMethod = null;
-    
+
     /**
      * The target on which the method will be called when the function is executed.
      */
     protected Object targetInstance = null;
-    
+
     /**
      * The current status of the class loader.
      */
     protected ClassLoaderStatus status = ClassLoaderStatus.READY;
 
-    
-    /**
-     * The connect annotation in the case this is a delegate.
-     */
-    private Connect connectAnnotation;
 
     /**
      * The name (i.e., the ID) of the method to connect to the function, that is the one that is specified in
@@ -109,75 +95,75 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
      * @see java.lang.ClassLoader#findClass(java.lang.String)
      */
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
 	try {
-	    
+
 	    // security check: do not load any class that is not the IFunction one!
 	    if( ! IFunction.class.getName().equals(name) )
 		throw new ClassNotFoundException("Cannot load a class different from IFunction with this classloader!");
-	    
-	    
+
+
 	    // the class loader is busy now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.BUSY;
+		status = ClassLoaderStatus.BUSY;
 	    }
-	    
-	    
+
+
 	    // get the class pool for working with classes and modifying them on the fly
-	    ClassPool pool = ClassPool.getDefault();
-	    CtClass baseProxyClass = null;
-	    
+	    final ClassPool pool = ClassPool.getDefault();
+	    final CtClass baseProxyClass = null;
+
 	    // the array that will store the in-memory byte code
 	    byte[] bytecode = null;
-	    
+
 	    // I have to compute a name for the class to implement.
-	    String functionClassName = ClassLoaderUtils.computeFunctionClassName( this.functionNameFromAnnotation, this.targetInstance.getClass() );
+	    final String functionClassName = ClassLoaderUtils.computeFunctionClassName( functionNameFromAnnotation, targetInstance.getClass() );
 	    logger.debug("The new function class name is " + functionClassName );
-	    
+
 	    // create a new class for the specified name
-	    CtClass newFunctionClass = pool.makeClass( functionClassName );
-	    
+	    final CtClass newFunctionClass = pool.makeClass( functionClassName );
+
 	    // I need also a ctclass for the target object
-	    CtClass targetObjectCtClass = pool.get( this.targetInstance.getClass().getName() );
-	    
-	    
-	    
-	    
+	    final CtClass targetObjectCtClass = pool.get( targetInstance.getClass().getName() );
+
+
+
+
 	    // now the class has the new member, I need an empty constructor so to be sure that reflection
 	    // will work instantiating the class
 	    logger.debug("Creating a new empty constructor");
-	    CtConstructor constructor = new CtConstructor(null, newFunctionClass );
+	    final CtConstructor constructor = new CtConstructor(null, newFunctionClass );
 	    constructor.setBody(";");
 	    newFunctionClass.addConstructor(constructor);
-	    
-	    
-	    
+
+
+
 	    // now I have to add a field with the target object on which I'm going to call the method.
 	    // The idea is that the function object will have a private refence to the target object
 	    // on which it will call the method specified.
-	    String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( this.targetInstance.getClass() );
+	    final String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( targetInstance.getClass() );
 	    logger.debug("The private reference to the target object will be " + privateReferenceName );
-	    
+
 	    // now that I've got the name, create the field to add to the new class
-	    CtField privateReferenceField = new CtField( targetObjectCtClass,		// class type of the field 
-		                                         privateReferenceName, 		// field name
-		                                         newFunctionClass 		// declaring class
-		                                         );
+	    final CtField privateReferenceField = new CtField( targetObjectCtClass,		// class type of the field 
+		    privateReferenceName, 		// field name
+		    newFunctionClass 		// declaring class
+	    );
 	    // TODO make the modifier private
 	    //privateReferenceField.setModifiers(  )
 	    newFunctionClass.addField( privateReferenceField );
-	    
-	    
+
+
 	    // now I need to implement the inteface IFunction
-	    CtClass iFunctionCtClass = pool.get( IFunction.class.getName() );
+	    final CtClass iFunctionCtClass = pool.get( IFunction.class.getName() );
 	    newFunctionClass.addInterface(iFunctionCtClass);
-	    
+
 	    // now add the IFunction method implementation
 	    StringBuffer methodCode = new StringBuffer(1000);
-	    for( CtMethod iFunctionMethod : iFunctionCtClass.getDeclaredMethods() ){
-				
+	    for( final CtMethod iFunctionMethod : iFunctionCtClass.getDeclaredMethods() ){
+
 		logger.debug("Implementing the IFunction method " + iFunctionMethod.getName() );
-		
+
 		// method name and qualifiers
 		methodCode.append( "public");
 		methodCode.append( " " );
@@ -185,47 +171,47 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		methodCode.append( " " );
 		methodCode.append( iFunctionMethod.getName() );
 		methodCode.append( "(" );
-		
+
 		// parameter list
-		CtClass params[] = iFunctionMethod.getParameterTypes();
-		for( int paramNumber = 0; params != null && paramNumber < params.length; paramNumber++ ){
+		final CtClass params[] = iFunctionMethod.getParameterTypes();
+		for( int paramNumber = 0; (params != null) && (paramNumber < params.length); paramNumber++ ){
 		    if( paramNumber > 0 )
 			methodCode.append( ", ");
-		    
+
 		    methodCode.append( params[paramNumber].getName() );
 		    methodCode.append( " " );
 		    methodCode.append( "param" + paramNumber); 
 		}
-		
+
 		methodCode.append( ") " );
-		
-		
+
+
 		// exception management
-		CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
-		if( exceptions != null && exceptions.length > 0 ){
+		final CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
+		if( (exceptions != null) && (exceptions.length > 0) ){
 		    methodCode.append( "throws " );
-		    
+
 		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
 			if( exceptionNumber > 0 )
 			    methodCode.append( ", " );
-			
+
 			methodCode.append( exceptions[ exceptionNumber ].getName() );
 		    }
 		}
 
-		
-		
+
+
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
 		//methodCode.append( "System.out.println(\" method call on \" + "+ privateReferenceName + ");");
-		
-		
-		
+
+
+
 		// security checks: the method must receive the exact number of parameters!
-		int requiredParameters = ( this.currentMethod.getParameterTypes() != null ? this.currentMethod.getParameterTypes().length : 0 );
+		final int requiredParameters = ( currentMethod.getParameterTypes() != null ? currentMethod.getParameterTypes().length : 0 );
 		if( requiredParameters > 0 ){
 		    methodCode.append(" if( param0 == null || param0.length != ");
-		    methodCode.append( this.currentMethod.getParameterTypes().length );
+		    methodCode.append( currentMethod.getParameterTypes().length );
 		    methodCode.append( ")\n\t\t" );
 		    methodCode.append( "{\n\t\t\t" );
 		    methodCode.append( BadArityException.class.getName() );
@@ -242,11 +228,11 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    methodCode.append( "throw bae; " );
 		    methodCode.append( "\n\t\t" );
 		    methodCode.append( "}\n" );
-		    
-		    
+
+
 		    // another security check: the method must receive the exact type of the parameters
-		    Class parameterTypes[] = this.currentMethod.getParameterTypes();
-		    
+		    final Class parameterTypes[] = currentMethod.getParameterTypes();
+
 		    for( int checkNumber = 0; checkNumber < parameterTypes.length; checkNumber ++ ){
 			methodCode.append( "\n\t" );
 			methodCode.append( "if( ! param0[" );
@@ -279,36 +265,36 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    }
 
 		}
-		
-		
-		
-		
-		
+
+
+
+
+
 		methodCode.append( "\n\t" );
 		// WARNING: if the method has a void return type, do not insert a return statement
 		System.out.println("\n\n\t\t =>\t "   );
-		boolean isVoid = ( this.currentMethod.getReturnType().toString().equals("void") || java.lang.Void.class.equals( this.currentMethod.getReturnType() ) ); 
+		final boolean isVoid = ( currentMethod.getReturnType().toString().equals("void") || java.lang.Void.class.equals( currentMethod.getReturnType() ) ); 
 		if(! isVoid ){
 		    methodCode.append( "return");
 		    methodCode.append( " " );
 		    methodCode.append( "(" );
-		    methodCode.append( this.currentMethod.getReturnType().getName() );
+		    methodCode.append( currentMethod.getReturnType().getName() );
 		    methodCode.append( ") " );
 		}
 
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( "." );
-		methodCode.append( this.currentMethod.getName() );
+		methodCode.append( currentMethod.getName() );
 		methodCode.append( "(" );
-		
-		// now the parameter list, that should be only for those expected
-		Class targetMethodParameters[] = this.currentMethod.getParameterTypes();
 
-		for( int paramNumber = 0; targetMethodParameters != null && paramNumber < targetMethodParameters.length; paramNumber++ ){
+		// now the parameter list, that should be only for those expected
+		final Class targetMethodParameters[] = currentMethod.getParameterTypes();
+
+		for( int paramNumber = 0; (targetMethodParameters != null) && (paramNumber < targetMethodParameters.length); paramNumber++ ){
 		    if( paramNumber > 0 )
 			methodCode.append( ", " );
-		    
+
 		    // cast the current argument to the right type
 		    methodCode.append( "(" );
 		    methodCode.append( targetMethodParameters[paramNumber].getName() );
@@ -316,90 +302,90 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		    // the argument value is in the param array
 		    methodCode.append( "param0"  + "[" + paramNumber + "]" );	// variadic method -> array param0!
 		}
-		
+
 		methodCode.append( ");" );
-		
-		
+
+
 		// a return statement?
 		if( isVoid ){
 		    // insert a return statement
 		    methodCode.append( "\n\t return null;\n" );
 		}
-		
-		
+
+
 		// end of the method body
 		methodCode.append( "\n}\n" );
-		
+
 		logger.debug("Generated method body:\n");
 		logger.debug( methodCode.toString() );
-		
+
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
+		final CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
 		newFunctionClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
 
 
-	    
-	    
-	    
+
+
+
 	    // now I need to add the interface and the method to initialize the private
 	    // variable of the new function instance
 	    methodCode = new StringBuffer( 1000 );
-	    CtClass binderClass = pool.get( IFunctionBinder.class.getName() );
-	    
+	    final CtClass binderClass = pool.get( IFunctionBinder.class.getName() );
+
 	    // add the interface to the current class
 	    newFunctionClass.addInterface(binderClass);
 
 	    // create all the methods (it should be only one)
-	    for( CtMethod currentMethod : binderClass.getDeclaredMethods() ){
+	    for( final CtMethod currentMethod : binderClass.getDeclaredMethods() ){
 		methodCode.append( " public ");
 		methodCode.append( currentMethod.getReturnType().getName() );
 		methodCode.append(  " " );
 		methodCode.append( currentMethod.getName() );
 		methodCode.append( "(" );
-		
-		CtClass[] parameters = currentMethod.getParameterTypes();
-		for( int parameterNumber = 0; parameters != null && parameterNumber < parameters.length; parameterNumber++ ){
+
+		final CtClass[] parameters = currentMethod.getParameterTypes();
+		for( int parameterNumber = 0; (parameters != null) && (parameterNumber < parameters.length); parameterNumber++ ){
 		    if( parameterNumber > 0 )
 			methodCode.append( ", " );
-		    
+
 		    methodCode.append( parameters[parameterNumber].getName() );
 		    methodCode.append( " " );
 		    methodCode.append( " param" + parameterNumber );
 		}
-		
+
 		methodCode.append( ") " );
-		
+
 		// exception management
-		CtClass exceptions[] = currentMethod.getExceptionTypes();
-		if( exceptions != null && exceptions.length > 0 ){
+		final CtClass exceptions[] = currentMethod.getExceptionTypes();
+		if( (exceptions != null) && (exceptions.length > 0) ){
 		    methodCode.append( "throws " );
-		    
+
 		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
 			if( exceptionNumber > 0 )
 			    methodCode.append( ", " );
-			
+
 			methodCode.append( exceptions[ exceptionNumber ].getName() );
 		    }
 		}
-		
+
 		methodCode.append( "\n" );
 		// body definition
 		methodCode.append( "{\n\t" );
 
-		
+
 		// security check: the first argument must be of the right type
 		methodCode.append(" if( param0 == null || (! ( param0 instanceof ");
-		methodCode.append( this.targetInstance.getClass().getName() );
+		methodCode.append( targetInstance.getClass().getName() );
 		methodCode.append( ") ) )" );
 		methodCode.append( "\n\t\t" );
 		methodCode.append( "throw new " );
 		methodCode.append( TargetBindException.class.getName() );
 		methodCode.append( "(\"The binding object is not of the right type!\");" );
 		methodCode.append( "\n\n" );
-		
-		
+
+
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( " = " );
@@ -408,113 +394,109 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 		methodCode.append( ") " );
 		methodCode.append( "param0;" );
 		methodCode.append( "\n}\n" );
-		
+
 		logger.debug("Generated setter method \n" + methodCode.toString() );
-		
+
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
+		final CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
 		newFunctionClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
-	    
-	    
+
+
 
 	    // now define the class
 	    bytecode = newFunctionClass.toBytecode();
-	    
+
 	    // the class loader is ready now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.READY;
+		status = ClassLoaderStatus.READY;
 	    }
 
-	    
+
 	    return this.defineClass( functionClassName, bytecode, 0, bytecode.length );
-	    
-	    
-        } catch (NotFoundException e) {
-            logger.error("Exception caught while defining a class",e);
-            throw new ClassNotFoundException("Cannot find class", e );
-        } catch (IOException e) {
-            throw new ClassNotFoundException("Cannot find class", e );
-        } catch (CannotCompileException e) {
-            logger.error("Cannot compile exception caught while definining a IFunction class ", e);
-            throw new ClassNotFoundException("Cannot find class", e );
-        } finally{
-         // the class loader is ready now
+
+
+	} catch (final NotFoundException e) {
+	    logger.error("Exception caught while defining a class",e);
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} catch (final IOException e) {
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} catch (final CannotCompileException e) {
+	    logger.error("Cannot compile exception caught while definining a IFunction class ", e);
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} finally{
+	    // the class loader is ready now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.READY;
+		status = ClassLoaderStatus.READY;
 	    }
-        }
+	}
 
     }
-    
+
     /* (non-Javadoc)
      * @see jfk.function.classloaders.IFunctionClassDefiner#getIFunctionClassDefinition(java.lang.Object, java.lang.reflect.Method)
      */
     @Override
-    public final synchronized Class getIFunctionClassDefinition(Object targetObject, Method targetMethod ) throws JFKException{
+    public final synchronized Class getIFunctionClassDefinition(final Object targetObject, final Method targetMethod ) throws JFKException{
 	try {
 	    // check params
-	    if( ClassLoaderStatus.BUSY.equals( this.status ) )
+	    if( ClassLoaderStatus.BUSY.equals( status ) )
 		throw new JFKException("The classloader is busy!");
-	    
-	    if( targetObject == null || targetMethod == null )
+
+	    if( (targetObject == null) || (targetMethod == null) )
 		throw new IllegalArgumentException("Cannot proceed without the method and the target object");
-	    
+
 	    if( (! targetMethod.isAnnotationPresent( Function.class )) && (! targetMethod.isAnnotationPresent(Connect.class))   )
 		throw new CannotBindFunctionException("The specified method is not a function/connect annotated one!");
-	    
+
 	    // get the annotation name and parameters
 	    if( targetMethod.isAnnotationPresent( Function.class) ){
-		Function functionAnnotation = targetMethod.getAnnotation( Function.class );
-		this.functionAnnotation = functionAnnotation;
-		this.functionNameFromAnnotation = functionAnnotation.name();
+		final Function functionAnnotation = targetMethod.getAnnotation( Function.class );
+		functionNameFromAnnotation = functionAnnotation.name();
 	    }
 	    else if( targetMethod.isAnnotationPresent( Connect.class ) ){
-		Connect connectAnnotation = targetMethod.getAnnotation( Connect.class );
-		this.connectAnnotation = connectAnnotation;
-		this.functionNameFromAnnotation = connectAnnotation.name();
+		final Connect connectAnnotation = targetMethod.getAnnotation( Connect.class );
+		functionNameFromAnnotation = connectAnnotation.name();
 	    }
-	    
-	    // set the parameters for the loader
-	    this.currentMethod = targetMethod;
-	    this.targetInstance = targetObject;
 
-	    
+	    // set the parameters for the loader
+	    currentMethod = targetMethod;
+	    targetInstance = targetObject;
+
+
 	    // define the class
-	    return this.findClass( IFunction.class.getName() );
-	} catch (ClassNotFoundException e) {
+	    return findClass( IFunction.class.getName() );
+	} catch (final ClassNotFoundException e) {
 	    logger.error("Error defining the IFunction class", e);
 	    throw new JFKException(e);
 	}
     }
-    
-    
 
-    /**
-     * A method to set the value of the functionAnnotation
-     * field within this object instance.
-     * @param functionAnnotation the functionAnnotation to set
-     */
-    public synchronized final void setFunctionAnnotation(Function functionAnnotation) {
-        // set the value of the this.functionAnnotation field only if the class loader is not busy
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
-	    throw new IllegalArgumentException("Class loader is busy at the moment!");
-	
-        this.functionAnnotation = functionAnnotation;
-    }
+
 
     /**
      * A method to set the value of the currentMethod
      * field within this object instance.
      * @param currentMethod the currentMethod to set
      */
-    public synchronized final void setCurrentMethod(Method currentMethod) {
-        // set the value of the this.currentMethod field
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
+    public synchronized final void setCurrentMethod(final Method currentMethod) {
+	// set the value of the this.currentMethod field
+	if(  ClassLoaderStatus.BUSY.equals( status ) )
 	    throw new IllegalArgumentException("Class loader is busy at the moment!");
-	
-        this.currentMethod = currentMethod;
+
+	this.currentMethod = currentMethod;
+    }
+
+    /**
+     * A method to set the value of the functionAnnotation
+     * field within this object instance.
+     * @param functionAnnotation the functionAnnotation to set
+     */
+    public synchronized final void setFunctionAnnotation(final Function functionAnnotation) {
+	// set the value of the this.functionAnnotation field only if the class loader is not busy
+	if(  ClassLoaderStatus.BUSY.equals( status ) )
+	    throw new IllegalArgumentException("Class loader is busy at the moment!");
     }
 
     /**
@@ -522,17 +504,17 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
      * field within this object instance.
      * @param targetInstance the targetInstance to set
      */
-    public synchronized final void setTargetInstance(Object targetInstance) {
-        // set the value of the this.targetInstance field
-	if(  ClassLoaderStatus.BUSY.equals( this.status ) )
+    public synchronized final void setTargetInstance(final Object targetInstance) {
+	// set the value of the this.targetInstance field
+	if(  ClassLoaderStatus.BUSY.equals( status ) )
 	    throw new IllegalArgumentException("Class loader is busy at the moment!");
-	
-        this.targetInstance = targetInstance;
+
+	this.targetInstance = targetInstance;
     }
-    
-    
-    
-   
-    
+
+
+
+
+
 
 }

@@ -24,7 +24,6 @@
  */
 package jfk.function;
 
-import jfk.function.delegates.IDelegatable;
 import jfk.function.delegates.IDelegate;
 import jfk.function.exception.CannotBindFunctionException;
 
@@ -41,17 +40,6 @@ import jfk.function.exception.CannotBindFunctionException;
 public interface IFunctionBuilder {
 
     /**
-     * This method defines how a function is bound to a specific object/class method.
-     * 
-     * @param target the object or the class on which the method will be invoked
-     * @param name the identifier of the Function annotation that is used to mark the method
-     * as a function
-     * @return the function object to use as a first class entity
-     */
-    public IFunction bindFunction( Object target, String name ) throws CannotBindFunctionException;
-    
-    
-    /**
      * This method is used to create the function for a delegate, that is a method that is marked
      * thru the Connect annotation.
      * @param target the delegate object
@@ -60,4 +48,15 @@ public interface IFunctionBuilder {
      * @throws CannotBindFunctionException
      */
     public IFunction bindDelegateFunction( IDelegate target, String name ) throws CannotBindFunctionException;
+
+
+    /**
+     * This method defines how a function is bound to a specific object/class method.
+     * 
+     * @param target the object or the class on which the method will be invoked
+     * @param name the identifier of the Function annotation that is used to mark the method
+     * as a function
+     * @return the function object to use as a first class entity
+     */
+    public IFunction bindFunction( Object target, String name ) throws CannotBindFunctionException;
 }

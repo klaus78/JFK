@@ -35,13 +35,6 @@ import jfk.function.JFKException;
 public class CannotBindFunctionException extends JFKException {
 
     /**
-     * @param message
-     */
-    public CannotBindFunctionException(String message) {
-	super(message);
-    }
-
-    /**
      * 
      */
     public CannotBindFunctionException() {
@@ -51,14 +44,21 @@ public class CannotBindFunctionException extends JFKException {
 
     /**
      * @param message
+     */
+    public CannotBindFunctionException(final String message) {
+	super(message);
+    }
+
+    /**
+     * @param message
      * @param cause
      */
-    public CannotBindFunctionException(String message, Throwable cause) {
+    public CannotBindFunctionException(final String message, final Throwable cause) {
 	super(message, cause);
 	// TODO Auto-generated constructor stub
     }
-    
-    
 
-    
+
+
+
 }

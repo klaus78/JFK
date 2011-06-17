@@ -36,6 +36,15 @@ import jfk.function.exception.delegates.CannotConnectDelegateException;
 public interface IDelegateManager {
 
     /**
+     * Connects a new delegate to a delegatable source.
+     * @param source the source with the delegatable methods
+     * @param destination the implementation of the methods
+     * @return true if the delegate has been added
+     */
+    public boolean addDelegate( IDelegatable source, IDelegate destination );
+
+
+    /**
      * The main method to create and bind a delegate to a specific target. 
      * The delegate has a set of abstract methods that must be implemented at run-time and connected to 
      * counterparts method on the delegate target.
@@ -46,17 +55,15 @@ public interface IDelegateManager {
      * @throws AlreadyImplementedDelegateException if the delegate class as already an implementation of the methods
      */
     public IDelegatable createAndBind( Class delegatableClass, IDelegate delegateTarget ) throws CannotConnectDelegateException, AlreadyImplementedDelegateException;
-    
-    
+
+
     /**
-     * Connects a new delegate to a delegatable source.
-     * @param source the source with the delegatable methods
-     * @param destination the implementation of the methods
-     * @return true if the delegate has been added
+     * A method to forget a delegatable object, that is to allow a new creation of the same delegate with different binds.
+     * @param source the source to delete
      */
-    public boolean addDelegate( IDelegatable source, IDelegate destination );
-    
-    
+    public void forgetDelegatable( Class source );
+
+
     /**
      * Removes the delegate from the delegatable source.
      * @param source the delegatable source
@@ -64,11 +71,4 @@ public interface IDelegateManager {
      * @return true if the delegate has been removed
      */
     public boolean removeDelegate( IDelegatable source, IDelegate destination );
-    
-    
-    /**
-     * A method to forget a delegatable object, that is to allow a new creation of the same delegate with different binds.
-     * @param source the source to delete
-     */
-    public void forgetDelegatable( Class source );
 }

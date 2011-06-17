@@ -43,7 +43,7 @@ import jfk.function.exception.BadParameterTypeException;
  *
  */
 public interface IFunction {
-    
+
     /**
      * This is the method to call in order to execute the method call this object points to.
      * Consider that instances of this interface are like "function pointer", so calling this method

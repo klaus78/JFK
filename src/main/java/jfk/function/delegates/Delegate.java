@@ -42,16 +42,16 @@ import java.lang.annotation.Target;
 public @interface Delegate {
 
     /**
+     * This flag indicates if the delegate can be bound to multiple associations and implementations.
+     * @return true if the delegate can be bound to multiple instances
+     */
+    public boolean allowMultiple() default false;
+
+
+    /**
      * The name of the delegate is its identifier and should be unique within the
      * class that defines it.
      * @return the name used to reference this delegate
      */
     public String name() default "";
-    
-    
-    /**
-     * This flag indicates if the delegate can be bound to multiple associations and implementations.
-     * @return true if the delegate can be bound to multiple instances
-     */
-    public boolean allowMultiple() default false;
 }

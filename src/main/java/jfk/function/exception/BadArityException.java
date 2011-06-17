@@ -33,17 +33,17 @@ import jfk.function.JFKException;
  */
 public class BadArityException extends JFKException {
 
-    
+
     /**
      * The required arity.
      */
     private int requiredArity = 0;
-    
+
     /**
      * The supplied arity.
      */
     private int suppliedArity = 0;
-    
+
     /**
      * 
      */
@@ -53,25 +53,25 @@ public class BadArityException extends JFKException {
 
     /**
      * @param message
-     * @param cause
      */
-    public BadArityException(String message, Throwable cause) {
-	super(message, cause);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param message
-     */
-    public BadArityException(String message) {
+    public BadArityException(final String message) {
 	super(message);
 	// TODO Auto-generated constructor stub
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public BadArityException(Throwable cause) {
+    public BadArityException(final String message, final Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public BadArityException(final Throwable cause) {
 	super(cause);
 	// TODO Auto-generated constructor stub
     }
@@ -82,18 +82,8 @@ public class BadArityException extends JFKException {
      * @return the requiredArity value
      */
     public synchronized final int getRequiredArity() {
-        // return the value of the this.requiredArity field
-        return this.requiredArity;
-    }
-
-    /**
-     * A method to set the value of the requiredArity
-     * field within this object instance.
-     * @param requiredArity the requiredArity to set
-     */
-    public synchronized final void setRequiredArity(int requiredArity) {
-        // set the value of the this.requiredArity field
-        this.requiredArity = requiredArity;
+	// return the value of the this.requiredArity field
+	return requiredArity;
     }
 
     /**
@@ -102,8 +92,18 @@ public class BadArityException extends JFKException {
      * @return the suppliedArity value
      */
     public synchronized final int getSuppliedArity() {
-        // return the value of the this.suppliedArity field
-        return this.suppliedArity;
+	// return the value of the this.suppliedArity field
+	return suppliedArity;
+    }
+
+    /**
+     * A method to set the value of the requiredArity
+     * field within this object instance.
+     * @param requiredArity the requiredArity to set
+     */
+    public synchronized final void setRequiredArity(final int requiredArity) {
+	// set the value of the this.requiredArity field
+	this.requiredArity = requiredArity;
     }
 
     /**
@@ -111,11 +111,11 @@ public class BadArityException extends JFKException {
      * field within this object instance.
      * @param suppliedArity the suppliedArity to set
      */
-    public synchronized final void setSuppliedArity(int suppliedArity) {
-        // set the value of the this.suppliedArity field
-        this.suppliedArity = suppliedArity;
+    public synchronized final void setSuppliedArity(final int suppliedArity) {
+	// set the value of the this.suppliedArity field
+	this.suppliedArity = suppliedArity;
     }
-    
-    
+
+
 
 }

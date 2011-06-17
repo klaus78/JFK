@@ -26,10 +26,6 @@ package jfk.function.classloaders;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.security.SecureClassLoader;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -39,7 +35,6 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 import jfk.function.IClosure;
-import jfk.function.IClosureBuilder;
 import jfk.function.IFunction;
 import jfk.function.exception.BadArityException;
 import jfk.function.exception.BadParameterTypeException;
@@ -54,16 +49,16 @@ import jfk.function.exception.TargetBindException;
  */
 public class ClosureClassLoader extends FunctionClassLoader {
 
-    
-   
-    
-    
+
+
+
+
     /**
      * The closure code to compile and get information on the closure.
      */
     private String closureCode = null;
-    
-    
+
+
     /**
      * 
      */
@@ -71,123 +66,123 @@ public class ClosureClassLoader extends FunctionClassLoader {
 	// TODO Auto-generated constructor stub
     }
 
-   
-    
-    
+
+
+
     /* (non-Javadoc)
      * @see java.lang.ClassLoader#findClass(java.lang.String)
      */
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
 	try {
-	    
+
 	    // security check: do not load any class that is not the IFunction one!
 	    if( ! IClosure.class.getName().equals(name) )
 		throw new ClassNotFoundException("Cannot load a class different from IClosure with this classloader!");
-	    
-	    
+
+
 	    // the class loader is busy now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.BUSY;
+		status = ClassLoaderStatus.BUSY;
 	    }
-	    
-	    
+
+
 	    // get the class pool for working with classes and modifying them on the fly
-	    ClassPool pool = ClassPool.getDefault();
-	    CtClass baseProxyClass = null;
-	    
+	    final ClassPool pool = ClassPool.getDefault();
+	    final CtClass baseProxyClass = null;
+
 	    // the array that will store the in-memory byte code
 	    byte[] bytecode = null;
-	    
-	   
-	    
+
+
+
 	    // I need also a ctclass for the target object
 	    // Since a closure does not have a target, I need to use a simple Object
-	    String targetObjectClassName = ClassLoaderUtils.getClosureClassName();
-	    CtClass targetObjectCtClass = pool.makeClass( targetObjectClassName );
-	    
+	    final String targetObjectClassName = ClassLoaderUtils.getClosureClassName();
+	    final CtClass targetObjectCtClass = pool.makeClass( targetObjectClassName );
+
 	    // compile the method passed and inject it into the target object
 	    logger.debug("Compiling the closure method code\n");
-	    logger.debug( this.closureCode );
-	    CtMethod closureMethod = CtMethod.make( this.closureCode, targetObjectCtClass );
+	    logger.debug( closureCode );
+	    final CtMethod closureMethod = CtMethod.make( closureCode, targetObjectCtClass );
 	    targetObjectCtClass.addMethod(closureMethod);
 
 
 	    try{
 		// now I compile the class and create a new object
 		bytecode = targetObjectCtClass.toBytecode();
-		Class compiledClosureClass = this.defineClass( targetObjectClassName, bytecode, 0, bytecode.length );
-		this.targetInstance = compiledClosureClass.newInstance();
-		
+		final Class compiledClosureClass = this.defineClass( targetObjectClassName, bytecode, 0, bytecode.length );
+		targetInstance = compiledClosureClass.newInstance();
+
 		// if here I've got the closure target object, get the method for such target object
-		for( Method met : compiledClosureClass.getDeclaredMethods() )
+		for( final Method met : compiledClosureClass.getDeclaredMethods() )
 		    if( met.getName().equals( closureMethod.getName() ) ){
-			this.currentMethod = met;
+			currentMethod = met;
 			break;
 		    }
-		
+
 		// the method must be found
-		if( this.currentMethod == null )
+		if( currentMethod == null )
 		    throw new ClassNotFoundException("Cannot find the closure implementation method");
-		
-		logger.debug("Closure target object built: " + this.targetInstance.getClass() );
-		
-	    }catch (InstantiationException e) {
+
+		logger.debug("Closure target object built: " + targetInstance.getClass() );
+
+	    }catch (final InstantiationException e) {
 		logger.error("Cannot instantiate class while defining closure target object", e);
 		throw new ClassNotFoundException("Instantiation problem while creating the closure target object", e);
-	    } catch (IllegalAccessException e) {
+	    } catch (final IllegalAccessException e) {
 		logger.error("Cannot access class while defining closure target object", e);
 		throw new ClassNotFoundException("Access problem while defining the closure target object",  e);
 	    }
 
-	    
-	    
+
+
 	    // I have to compute a name for the class to implement.
-	    String closureClassName = ClassLoaderUtils.computeClosureClassName();
+	    final String closureClassName = ClassLoaderUtils.computeClosureClassName();
 	    logger.debug("The new closure class name is " + closureClassName );
-	    
+
 	    // create a new class for the specified name
-	    CtClass newClosureClass = pool.makeClass( closureClassName );
-	    
-	    
-	    
+	    final CtClass newClosureClass = pool.makeClass( closureClassName );
+
+
+
 	    // now the class has the new member, I need an empty constructor so to be sure that reflection
 	    // will work instantiating the class
 	    logger.debug("Creating a new empty constructor");
-	    CtConstructor constructor = new CtConstructor(null, newClosureClass );
+	    final CtConstructor constructor = new CtConstructor(null, newClosureClass );
 	    constructor.setBody(";");
 	    newClosureClass.addConstructor(constructor);
-	    
-	    
-	    
+
+
+
 	    // now I have to add a field with the target object on which I'm going to call the method.
 	    // The idea is that the function object will have a private refence to the target object
 	    // on which it will call the method specified.
-	    String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( targetObjectClassName );
+	    final String privateReferenceName = ClassLoaderUtils.computePrivateTargetReferenceName( targetObjectClassName );
 	    logger.debug("The private reference to the target object will be " + privateReferenceName );
-	    
+
 	    // now that I've got the name, create the field to add to the new class
-	    CtField privateReferenceField = new CtField( targetObjectCtClass,		// class type of the field 
-		                                         privateReferenceName, 		// field name
-		                                         newClosureClass 		// declaring class
-		                                         );
+	    final CtField privateReferenceField = new CtField( targetObjectCtClass,		// class type of the field 
+		    privateReferenceName, 		// field name
+		    newClosureClass 		// declaring class
+	    );
 	    // TODO make the modifier private
 	    //privateReferenceField.setModifiers(  )
 	    newClosureClass.addField( privateReferenceField );
-	    
-	    
+
+
 	    // now I need to implement the inteface IClosure
-	    CtClass iClosureCtClass = pool.get( IClosure.class.getName() );
+	    final CtClass iClosureCtClass = pool.get( IClosure.class.getName() );
 	    newClosureClass.addInterface(iClosureCtClass);
-	    
+
 	    // now add the IFunction method implementation
 	    StringBuffer methodCode = new StringBuffer(1000);
 	    // WARNING: IClosure does not define any method, I have to go to the superclass which is a IFunction
-	    CtClass functionCtClass = pool.get( IFunction.class.getName() );
-	    for( CtMethod iFunctionMethod : functionCtClass.getDeclaredMethods() ){
-				
+	    final CtClass functionCtClass = pool.get( IFunction.class.getName() );
+	    for( final CtMethod iFunctionMethod : functionCtClass.getDeclaredMethods() ){
+
 		logger.debug("Implementing the IClosure method " + iFunctionMethod.getName() );
-		
+
 		// method name and qualifiers
 		methodCode.append( "public");
 		methodCode.append( " " );
@@ -195,48 +190,48 @@ public class ClosureClassLoader extends FunctionClassLoader {
 		methodCode.append( " " );
 		methodCode.append( iFunctionMethod.getName() );
 		methodCode.append( "(" );
-		
+
 		// parameter list
-		CtClass params[] = iFunctionMethod.getParameterTypes();
-		for( int paramNumber = 0; params != null && paramNumber < params.length; paramNumber++ ){
+		final CtClass params[] = iFunctionMethod.getParameterTypes();
+		for( int paramNumber = 0; (params != null) && (paramNumber < params.length); paramNumber++ ){
 		    if( paramNumber > 0 )
 			methodCode.append( ", ");
-		    
+
 		    methodCode.append( params[paramNumber].getName() );
 		    methodCode.append( " " );
 		    methodCode.append( "param" + paramNumber); 
 		}
-		
+
 		methodCode.append( ") " );
-		
-		
+
+
 		// exception management
-		CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
-		if( exceptions != null && exceptions.length > 0 ){
+		final CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
+		if( (exceptions != null) && (exceptions.length > 0) ){
 		    methodCode.append( "throws " );
-		    
+
 		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
 			if( exceptionNumber > 0 )
 			    methodCode.append( ", " );
-			
+
 			methodCode.append( exceptions[ exceptionNumber ].getName() );
 		    }
 		}
 
-		
-		
+
+
 		// the body of the method starts here
 		methodCode.append( "\n{\n\t" );
-		
-		
 
-		
-		
+
+
+
+
 		// security checks: the method must receive the exact number of parameters!
-		int requiredParameters = ( this.currentMethod.getParameterTypes() != null ? this.currentMethod.getParameterTypes().length : 0 );
+		final int requiredParameters = ( currentMethod.getParameterTypes() != null ? currentMethod.getParameterTypes().length : 0 );
 		if( requiredParameters > 0 ){
 		    methodCode.append(" if( param0 == null || param0.length != ");
-		    methodCode.append( this.currentMethod.getParameterTypes().length );
+		    methodCode.append( currentMethod.getParameterTypes().length );
 		    methodCode.append( ")\n\t\t" );
 		    methodCode.append( "{\n\t\t\t" );
 		    methodCode.append( BadArityException.class.getName() );
@@ -253,11 +248,11 @@ public class ClosureClassLoader extends FunctionClassLoader {
 		    methodCode.append( "throw bae; " );
 		    methodCode.append( "\n\t\t" );
 		    methodCode.append( "}\n" );
-		    
-		    
+
+
 		    // another security check: the method must receive the exact type of the parameters
-		    Class parameterTypes[] = this.currentMethod.getParameterTypes();
-		    
+		    final Class parameterTypes[] = currentMethod.getParameterTypes();
+
 		    for( int checkNumber = 0; checkNumber < parameterTypes.length; checkNumber ++ ){
 			methodCode.append( "\n\t" );
 			methodCode.append( "if( ! param0[" );
@@ -290,36 +285,36 @@ public class ClosureClassLoader extends FunctionClassLoader {
 		    }
 
 		}
-		
-		
-		
-		
+
+
+
+
 
 		methodCode.append( "\n\t" );
-		
+
 		// WARNING: if the method has a void return type, do not insert a return statement
-		boolean isVoid = ( this.currentMethod.getReturnType().toString().equals("void") || java.lang.Void.class.equals( this.currentMethod.getReturnType() ) ); 
+		final boolean isVoid = ( currentMethod.getReturnType().toString().equals("void") || java.lang.Void.class.equals( currentMethod.getReturnType() ) ); 
 		if(! isVoid ){
 		    methodCode.append( "return");
 		    methodCode.append( " " );
 		    methodCode.append( "(" );
-		    methodCode.append( this.currentMethod.getReturnType().getName() );
+		    methodCode.append( currentMethod.getReturnType().getName() );
 		    methodCode.append( ") " );
 		}
-		
+
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( "." );
-		methodCode.append( this.currentMethod.getName() );
+		methodCode.append( currentMethod.getName() );
 		methodCode.append( "(" );
-		
-		// now the parameter list, that should be only for those expected
-		Class targetMethodParameters[] = this.currentMethod.getParameterTypes();
 
-		for( int paramNumber = 0; targetMethodParameters != null && paramNumber < targetMethodParameters.length; paramNumber++ ){
+		// now the parameter list, that should be only for those expected
+		final Class targetMethodParameters[] = currentMethod.getParameterTypes();
+
+		for( int paramNumber = 0; (targetMethodParameters != null) && (paramNumber < targetMethodParameters.length); paramNumber++ ){
 		    if( paramNumber > 0 )
 			methodCode.append( ", " );
-		    
+
 		    // cast the current argument to the right type
 		    methodCode.append( "(" );
 		    methodCode.append( targetMethodParameters[paramNumber].getName() );
@@ -327,89 +322,89 @@ public class ClosureClassLoader extends FunctionClassLoader {
 		    // the argument value is in the param array
 		    methodCode.append( "param0"  + "[" + paramNumber + "]" );	// variadic method -> array param0!
 		}
-		
+
 		methodCode.append( ");" );
-		
-		
+
+
 		// a return statement?
 		if( isVoid ){
 		    // insert a return statement
 		    methodCode.append( "\n\t return null;\n" );
 		}
-		
+
 		// end of the method body
 		methodCode.append( "\n}\n" );
-		
+
 		logger.debug("Generated method body:\n");
 		logger.debug( methodCode.toString() );
-		
+
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
+		final CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
 		newClosureClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
 
 
-	    
-	    
-	    
+
+
+
 	    // now I need to add the interface and the method to initialize the private
 	    // variable of the new function instance
 	    methodCode = new StringBuffer( 1000 );
-	    CtClass binderClass = pool.get( IFunctionBinder.class.getName() );
-	    
+	    final CtClass binderClass = pool.get( IFunctionBinder.class.getName() );
+
 	    // add the interface to the current class
 	    newClosureClass.addInterface(binderClass);
 
 	    // create all the methods (it should be only one)
-	    for( CtMethod currentMethod : binderClass.getDeclaredMethods() ){
+	    for( final CtMethod currentMethod : binderClass.getDeclaredMethods() ){
 		methodCode.append( " public ");
 		methodCode.append( currentMethod.getReturnType().getName() );
 		methodCode.append(  " " );
 		methodCode.append( currentMethod.getName() );
 		methodCode.append( "(" );
-		
-		CtClass[] parameters = currentMethod.getParameterTypes();
-		for( int parameterNumber = 0; parameters != null && parameterNumber < parameters.length; parameterNumber++ ){
+
+		final CtClass[] parameters = currentMethod.getParameterTypes();
+		for( int parameterNumber = 0; (parameters != null) && (parameterNumber < parameters.length); parameterNumber++ ){
 		    if( parameterNumber > 0 )
 			methodCode.append( ", " );
-		    
+
 		    methodCode.append( parameters[parameterNumber].getName() );
 		    methodCode.append( " " );
 		    methodCode.append( " param" + parameterNumber );
 		}
-		
+
 		methodCode.append( ") " );
-		
+
 		// exception management
-		CtClass exceptions[] = currentMethod.getExceptionTypes();
-		if( exceptions != null && exceptions.length > 0 ){
+		final CtClass exceptions[] = currentMethod.getExceptionTypes();
+		if( (exceptions != null) && (exceptions.length > 0) ){
 		    methodCode.append( "throws " );
-		    
+
 		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
 			if( exceptionNumber > 0 )
 			    methodCode.append( ", " );
-			
+
 			methodCode.append( exceptions[ exceptionNumber ].getName() );
 		    }
 		}
-		
+
 		methodCode.append( "\n" );
 		// body definition
 		methodCode.append( "{\n\t" );
 
-		
+
 		// security check: the first argument must be of the right type
 		methodCode.append(" if( param0 == null || (! ( param0 instanceof ");
-		methodCode.append( this.targetInstance.getClass().getName() );
+		methodCode.append( targetInstance.getClass().getName() );
 		methodCode.append( ") ) )" );
 		methodCode.append( "\n\t\t" );
 		methodCode.append( "throw new " );
 		methodCode.append( TargetBindException.class.getName() );
 		methodCode.append( "(\"The binding object is not of the right type!\");" );
 		methodCode.append( "\n\n" );
-		
-		
+
+
 		methodCode.append( " this." );
 		methodCode.append( privateReferenceName );
 		methodCode.append( " = " );
@@ -418,57 +413,44 @@ public class ClosureClassLoader extends FunctionClassLoader {
 		methodCode.append( ") " );
 		methodCode.append( "param0;" );
 		methodCode.append( "\n}\n" );
-		
+
 		logger.debug("Generated setter method \n" + methodCode.toString() );
-		
+
 		// now compile the method and add it to the class
-		CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
+		final CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newClosureClass );
 		newClosureClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
-	    
-	    
+
+
 
 	    // now define the class
 	    bytecode = newClosureClass.toBytecode();
-	    
+
 	    // the class loader is ready now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.READY;
+		status = ClassLoaderStatus.READY;
 	    }
 
-	    
+
 	    return this.defineClass( closureClassName, bytecode, 0, bytecode.length );
-	    
-	    
-        } catch (NotFoundException e) {
-            logger.error("Exception caught while defining a class",e);
-            throw new ClassNotFoundException("Cannot find class", e );
-        } catch (IOException e) {
-            throw new ClassNotFoundException("Cannot find class", e );
-        } catch (CannotCompileException e) {
-            logger.error("Cannot compile exception caught while definining a IFunction class ", e);
-            throw new ClassNotFoundException("Cannot find class", e );
-        } finally{
-         // the class loader is ready now
+
+
+	} catch (final NotFoundException e) {
+	    logger.error("Exception caught while defining a class",e);
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} catch (final IOException e) {
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} catch (final CannotCompileException e) {
+	    logger.error("Cannot compile exception caught while definining a IFunction class ", e);
+	    throw new ClassNotFoundException("Cannot find class", e );
+	} finally{
+	    // the class loader is ready now
 	    synchronized( this ){
-		this.status = ClassLoaderStatus.READY;
+		status = ClassLoaderStatus.READY;
 	    }
-        }
+	}
 
-    }
-
-
-
-
-    /**
-     * A method to set the value of the closureCode
-     * field within this object instance.
-     * @param closureCode the closureCode to set
-     */
-    public synchronized final void setClosureCode(String closureCode) {
-        // set the value of the this.closureCode field
-        this.closureCode = closureCode;
     }
 
 
@@ -482,16 +464,16 @@ public class ClosureClassLoader extends FunctionClassLoader {
     public synchronized final IClosure getClosure() throws ClosureException {
 	Class closureClass;
 	try {
-	    closureClass = this.findClass( IClosure.class.getName() );
+	    closureClass = findClass( IClosure.class.getName() );
 	    return (IClosure) closureClass.newInstance();
-	} catch (ClassNotFoundException e) {
+	} catch (final ClassNotFoundException e) {
 	    throw new ClosureException( e );
-	} catch (InstantiationException e) {
+	} catch (final InstantiationException e) {
 	    throw new ClosureException( e );
-	} catch (IllegalAccessException e) {
+	} catch (final IllegalAccessException e) {
 	    throw new ClosureException( e );
 	}
-	
+
     }
 
 
@@ -502,14 +484,27 @@ public class ClosureClassLoader extends FunctionClassLoader {
      * @return
      */
     public synchronized final Object getTargetInstance() {
-	return this.targetInstance;
+	return targetInstance;
     }
 
 
 
 
-  
+    /**
+     * A method to set the value of the closureCode
+     * field within this object instance.
+     * @param closureCode the closureCode to set
+     */
+    public synchronized final void setClosureCode(final String closureCode) {
+	// set the value of the this.closureCode field
+	this.closureCode = closureCode;
+    }
 
-    
+
+
+
+
+
+
 
 }

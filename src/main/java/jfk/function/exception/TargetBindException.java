@@ -42,25 +42,25 @@ public class TargetBindException extends JFKException {
 
     /**
      * @param message
-     * @param cause
      */
-    public TargetBindException(String message, Throwable cause) {
-	super(message, cause);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param message
-     */
-    public TargetBindException(String message) {
+    public TargetBindException(final String message) {
 	super(message);
 	// TODO Auto-generated constructor stub
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public TargetBindException(Throwable cause) {
+    public TargetBindException(final String message, final Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public TargetBindException(final Throwable cause) {
 	super(cause);
 	// TODO Auto-generated constructor stub
     }

@@ -42,25 +42,25 @@ public class AlreadyImplementedDelegateException extends DelegateException {
 
     /**
      * @param message
-     * @param cause
      */
-    public AlreadyImplementedDelegateException(String message, Throwable cause) {
-	super(message, cause);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param message
-     */
-    public AlreadyImplementedDelegateException(String message) {
+    public AlreadyImplementedDelegateException(final String message) {
 	super(message);
 	// TODO Auto-generated constructor stub
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public AlreadyImplementedDelegateException(Throwable cause) {
+    public AlreadyImplementedDelegateException(final String message, final Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public AlreadyImplementedDelegateException(final Throwable cause) {
 	super(cause);
 	// TODO Auto-generated constructor stub
     }

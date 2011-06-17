@@ -44,14 +44,14 @@ public interface IDelegatable {
      * or it does not include any method to attach)
      */
     public boolean addDelegate( IDelegate delegateToAdd, String name );
-    
-    
+
+
     /**
      * Removes a delegate from this object.
      * @param delegateToRemove the delegate to remove from this object
      * @return true if the delegate has been removed, false otherwise
      */
     public boolean removeDelegate( IDelegate delegateToRemove );
-    
-    
+
+
 }

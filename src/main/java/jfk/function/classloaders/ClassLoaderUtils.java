@@ -41,8 +41,16 @@ public class ClassLoaderUtils {
      * A counter incremented each time a new name is computed.
      */
     private static int counter = 0;
-    
-    
+
+
+    /**
+     * Computes the name of a closure class to construct.
+     * @return the closure name
+     */
+    public static synchronized String computeClosureClassName(){
+	return "Closure_" + (++counter);
+    }
+
     /**
      * This method computes a unique name for the function object depending on the function annotation,
      * the target class and the counter. The resulting name is compound by the target class simple name, 
@@ -52,24 +60,26 @@ public class ClassLoaderUtils {
      * @param targetClass the target class
      * @return the string with the name
      */
-    public static synchronized String computeFunctionClassName( Function functionAnnotation, Class targetClass ){
-	
+    public static synchronized String computeFunctionClassName( final Function functionAnnotation, final Class targetClass ){
+
 	// check params
-	if( functionAnnotation == null || targetClass == null )
+	if( (functionAnnotation == null) || (targetClass == null) )
 	    throw new IllegalArgumentException("Cannot compute a name without the class of the target object and/or the function annotation!" );
-	
+
 	return computeFunctionClassName( functionAnnotation.name(), targetClass);
-	
+
     }
-    
+
+
+
     /**
      * Computes the name of the class to be defined within the function.
      * @param nameFromTheAnnotation
      * @param targetClass
      * @return
      */
-    public static synchronized String computeFunctionClassName( String nameFromTheAnnotation, Class targetClass ){
-	StringBuffer buffer = new StringBuffer(50);
+    public static synchronized String computeFunctionClassName( final String nameFromTheAnnotation, final Class targetClass ){
+	final StringBuffer buffer = new StringBuffer(50);
 
 	// the name of the class to build will be the composition of the simple name of the
 	// target class name and the name of the annotation
@@ -82,9 +92,25 @@ public class ClassLoaderUtils {
 	// all done
 	return buffer.toString();
     }
-    
-    
-    
+
+
+    /**
+     * Creates the name of a private list to keep functions.
+     * @param name the name of a class
+     * @return the name to use as a private reference for the list of functions
+     */
+    public static synchronized String computePrivateListName(final String name) {
+	if( (name == null) || (name.length() < 0) )
+	    throw new IllegalArgumentException( "Empty or invalid name!" );
+
+	final StringBuffer buffer = new StringBuffer(50);
+	normalizeClassName(name, buffer);
+	buffer.append("_privateFunctionList_");
+	buffer.append( ++counter );
+	return buffer.toString();
+    }
+
+
     /**
      * Creates a new name for a private reference of the specified class. The name is compound by the fully
      * qualified name of the class with all the dots replaced with underscore, so for instance as <tt>jfk_example_myexample</tt>.
@@ -93,16 +119,19 @@ public class ClassLoaderUtils {
      * @param targetClass the class the reference will point to
      * @return the name of the reference to use
      */
-    public static synchronized String computePrivateTargetReferenceName( Class targetClass ){
+    public static synchronized String computePrivateTargetReferenceName( final Class targetClass ){
 	// check arguments
 	if( targetClass == null )
 	    throw new IllegalArgumentException(" Cannot compute a name without the class of the target object!" );
-	
+
 	return computePrivateTargetReferenceName( targetClass.getName() );
-	
+
     }
-    
-    
+
+
+
+
+
     /**
      * Creates a reference name starting from the class name.
      * The name is compound by the fully
@@ -112,58 +141,24 @@ public class ClassLoaderUtils {
      * @param className the name of the class to use
      * @return the reference name
      */
-    public static synchronized String computePrivateTargetReferenceName( String className ){
+    public static synchronized String computePrivateTargetReferenceName( final String className ){
 	// compose the name
-	StringBuffer buffer = new StringBuffer(50);
-	
+	final StringBuffer buffer = new StringBuffer(50);
+
 	normalizeClassName(className, buffer);
-	
+
 	if( buffer.length() == 0 )
 	    buffer.append("_unknwon");
-	   
-	
-	
 
-	
+
+
+
+
 	// all done
 	return buffer.toString();
     }
 
 
-    /**
-     * Changes the '.' in a class name with a '_'.
-     * @param className the name of the class
-     * @param buffer the buffer to use
-     */
-    private final static void normalizeClassName(String className, StringBuffer buffer) {
-	StringTokenizer tokenizer = new StringTokenizer( className, "." );
-	while( tokenizer.hasMoreElements() ){
-	    buffer.append( "_" );
-	    buffer.append( tokenizer.nextToken() );
-	}
-    }
-    
-
-   
-    
-    
-    /**
-     * Provide a standard name for the set target object method.
-     * @return the standard name of the method
-     */
-    public static synchronized String getSetTargetMethodName(){
-	return "__jfk_setTargetObject";
-    }
-    
-    
-    /**
-     * Computes the name of a closure class to construct.
-     * @return the closure name
-     */
-    public static synchronized String computeClosureClassName(){
-	return "Closure_" + (++counter);
-    }
-    
     /**
      * Gets a class name for a closure class to be defined on the fly. The class name does not represent
      * an existing class.
@@ -172,36 +167,41 @@ public class ClassLoaderUtils {
     public static synchronized String getClosureClassName(){
 	return "jfk.function.ClosureTargetObject_" + (++counter);
     }
-    
-    
+
     /**
      * Provides a name for the subclass delegate class name.
      * @param originalName the name of the superclass, the original class name
      * @return the name to use when defining the subclass
      */
-    public static synchronized String getDelegateClassName( String originalName ){
+    public static synchronized String getDelegateClassName( final String originalName ){
 	return originalName + "_impl_" +  (++counter);
     }
 
 
     /**
-     * Creates the name of a private list to keep functions.
-     * @param name the name of a class
-     * @return the name to use as a private reference for the list of functions
+     * Provide a standard name for the set target object method.
+     * @return the standard name of the method
      */
-    public static synchronized String computePrivateListName(String name) {
-	if( name == null || name.length() < 0 )
-	    throw new IllegalArgumentException( "Empty or invalid name!" );
-	
-	StringBuffer buffer = new StringBuffer(50);
-	normalizeClassName(name, buffer);
-	buffer.append("_privateFunctionList_");
-	buffer.append( ++counter );
-	return buffer.toString();
+    public static synchronized String getSetTargetMethodName(){
+	return "__jfk_setTargetObject";
     }
-    
-    
-  
-    
-    
+
+
+    /**
+     * Changes the '.' in a class name with a '_'.
+     * @param className the name of the class
+     * @param buffer the buffer to use
+     */
+    private final static void normalizeClassName(final String className, final StringBuffer buffer) {
+	final StringTokenizer tokenizer = new StringTokenizer( className, "." );
+	while( tokenizer.hasMoreElements() ){
+	    buffer.append( "_" );
+	    buffer.append( tokenizer.nextToken() );
+	}
+    }
+
+
+
+
+
 }

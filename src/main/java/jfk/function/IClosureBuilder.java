@@ -24,8 +24,6 @@
  */
 package jfk.function;
 
-import jfk.function.exception.BadArityException;
-import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.ClosureException;
 
 /**
@@ -37,7 +35,7 @@ import jfk.function.exception.ClosureException;
  */
 public interface IClosureBuilder {
 
-    
+
     /**
      * The main method to build a closure from a specific piece of code.
      * 

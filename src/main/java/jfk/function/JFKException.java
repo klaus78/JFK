@@ -41,25 +41,25 @@ public class JFKException extends Exception{
 
     /**
      * @param message
-     * @param cause
      */
-    public JFKException(String message, Throwable cause) {
-	super(message, cause);
-    }
-
-    /**
-     * @param message
-     */
-    public JFKException(String message) {
+    public JFKException(final String message) {
 	super(message);
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public JFKException(Throwable cause) {
+    public JFKException(final String message, final Throwable cause) {
+	super(message, cause);
+    }
+
+    /**
+     * @param cause
+     */
+    public JFKException(final Throwable cause) {
 	super(cause);
     }
 
-    
+
 }

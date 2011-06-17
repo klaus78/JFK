@@ -39,6 +39,15 @@ import jfk.function.exception.delegates.CannotConnectDelegateException;
 public interface IDelegateConnector {
 
     /**
+     * Creates the delegate implementation.
+     * @return the delegate implemented
+     * @throws CannotConnectDelegateException
+     * @throws AlreadyImplementedDelegateException
+     */
+    public IDelegatable createDelegate() throws CannotConnectDelegateException, AlreadyImplementedDelegateException;
+
+
+    /**
      * A method to prepare the binding between two methods.
      * @param sourceMethod the source method (the abstract one)
      * @param targetMethod the target method (the one already implemented)
@@ -46,21 +55,12 @@ public interface IDelegateConnector {
      * @return true if the bind has been registered
      */
     public boolean prepareConnection( Method sourceMethod, Method targetMethod, IDelegate targetInstance );
-    
-    
-    /**
-     * Creates the delegate implementation.
-     * @return the delegate implemented
-     * @throws CannotConnectDelegateException
-     * @throws AlreadyImplementedDelegateException
-     */
-    public IDelegatable createDelegate() throws CannotConnectDelegateException, AlreadyImplementedDelegateException;
-    
-    
+
+
     /**
      * Sets the source for this connector.
      * @param source the delegatable class that must be instantied
      */
     public void setDelegatableSource( Class source );
-    
+
 }

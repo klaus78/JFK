@@ -41,25 +41,25 @@ public class CannotConnectDelegateException extends DelegateException {
 
     /**
      * @param message
-     * @param cause
      */
-    public CannotConnectDelegateException(String message, Throwable cause) {
-	super(message, cause);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param message
-     */
-    public CannotConnectDelegateException(String message) {
+    public CannotConnectDelegateException(final String message) {
 	super(message);
 	// TODO Auto-generated constructor stub
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public CannotConnectDelegateException(Throwable cause) {
+    public CannotConnectDelegateException(final String message, final Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public CannotConnectDelegateException(final Throwable cause) {
 	super(cause);
 	// TODO Auto-generated constructor stub
     }

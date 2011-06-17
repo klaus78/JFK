@@ -34,7 +34,7 @@ import jfk.function.exception.TargetBindException;
  *
  */
 public interface IFunctionBinder {
-    
+
     /**
      * The method to set the target object. 
      * @param target the target object

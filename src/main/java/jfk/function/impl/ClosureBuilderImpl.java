@@ -28,8 +28,6 @@ import jfk.function.IClosure;
 import jfk.function.IClosureBuilder;
 import jfk.function.classloaders.ClosureClassLoader;
 import jfk.function.classloaders.IFunctionBinder;
-import jfk.function.exception.BadArityException;
-import jfk.function.exception.BadParameterTypeException;
 import jfk.function.exception.ClosureException;
 import jfk.function.exception.TargetBindException;
 
@@ -53,20 +51,20 @@ public class ClosureBuilderImpl implements IClosureBuilder {
      * @see jfk.function.IClosureBuilder#buildClosure(java.lang.String)
      */
     @Override
-    public IClosure buildClosure(String code)
-					     throws  ClosureException {
+    public IClosure buildClosure(final String code)
+    throws  ClosureException {
 	try {
-	    ClosureClassLoader loader = new ClosureClassLoader();
+	    final ClosureClassLoader loader = new ClosureClassLoader();
 	    loader.setClosureCode(code);
-	    IClosure closure = loader.getClosure();
+	    final IClosure closure = loader.getClosure();
 
 	    ((IFunctionBinder) closure).setTargetObject( loader.getTargetInstance() );
 	    return closure;
-	} catch (TargetBindException e) {
+	} catch (final TargetBindException e) {
 	    throw new ClosureException("Cannot bind closure", e);
 	}
 
-	
+
     }
 
 }

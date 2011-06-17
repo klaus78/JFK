@@ -32,11 +32,9 @@ import jfk.core.JFK;
 import jfk.function.Function;
 import jfk.function.IFunction;
 import jfk.function.IFunctionBuilder;
-import jfk.function.JFKException;
 import jfk.function.classloaders.IFunctionBinder;
 import jfk.function.classloaders.IFunctionClassDefiner;
 import jfk.function.delegates.Connect;
-import jfk.function.delegates.Delegate;
 import jfk.function.delegates.IDelegate;
 import jfk.function.exception.CannotBindFunctionException;
 
@@ -48,75 +46,15 @@ import jfk.function.exception.CannotBindFunctionException;
  */
 public class FunctionBuilderImpl implements IFunctionBuilder {
 
-    
+
     /**
      * A cache for already defined classes. Each function is mapped with a key
      * that corresponds to the class name the function will be bound to compound
      * by the name of the function annotation.
      */
-    private Map<String, IFunction> cache = new HashMap<String, IFunction>();
-    
-    
-    /* (non-Javadoc)
-     * @see jfk.function.IFunctionBuilder#bindFunction(java.lang.Object, jfk.function.Function)
-     */
-    @Override
-    public IFunction bindFunction(Object target, String name )
-									  throws CannotBindFunctionException {
-	// check arguments
-	if( target == null || name == null || name.length() < 0 )
-	    throw new CannotBindFunctionException("Cannot bind the method call to a function on " + target.getClass() + " for identifier " + name);
-	
-	// create a key for the cache entry
-	String cacheKey = target.getClass().getName() + "_" + name;
-	
-	// check if the function is already in the cache
-	if( this.cache.containsKey(cacheKey) )
-	    return this.cache.get(cacheKey);
-	
-	
-	// now iterate on each public method to see if one of the target object has the annotation
-	// of a function with the specified name, and in such case prepare to get the function object
-	for( Method currentMethod : target.getClass().getMethods() )
-	    if( currentMethod.isAnnotationPresent( Function.class ) ){
-		Function functionAnnotation = currentMethod.getAnnotation( Function.class );
-		
-		
-		
-		if( functionAnnotation.name().equals( name ) ){
-		    // ok, this method must be mapped as a function!!    
-		    
-		    try {
-			// get a new function definer and build the function
-			IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
-			Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
-			
-			// now create the instance
-			IFunction function = (IFunction) functionClass.newInstance();
-			
-			// set the target object
-			((IFunctionBinder) function ).setTargetObject(target);
-			
-			// all done
-			this.cache.put(cacheKey, function);
-			return function;
-			
-		    } catch (Exception e){
-			throw new CannotBindFunctionException("Cannot create the function object ", e);
-		    }
-		}
-		    
-	    }
-	
-	
-	// if here there is no method to map as a function
-	throw new CannotBindFunctionException("No method found to be mapped as " + name + " on " + target.getClass() );
-	
-    }
+    private final Map<String, IFunction> cache = new HashMap<String, IFunction>();
 
 
-    
-    
     /**
      * Creates the binding for a delegate, that is on a delegate annotation.
      * @param target
@@ -124,52 +62,112 @@ public class FunctionBuilderImpl implements IFunctionBuilder {
      * @return
      * @throws CannotBindFunctionException
      */
-    public IFunction bindDelegateFunction(IDelegate target, String name )  throws CannotBindFunctionException {
-    
+    public IFunction bindDelegateFunction(final IDelegate target, final String name )  throws CannotBindFunctionException {
+
 	// check arguments
-	if( target == null || name == null || name.length() < 0 )
+	if( (target == null) || (name == null) || (name.length() < 0) )
 	    throw new CannotBindFunctionException("Cannot bind the method call to a function on " + target.getClass() + " for identifier " + name);
-	
-	
+
+
 	// now iterate on each public method to see if one of the target object has the annotation
 	// of a function with the specified name, and in such case prepare to get the function object
-	for( Method currentMethod : target.getClass().getMethods() )
+	for( final Method currentMethod : target.getClass().getMethods() )
 	    if( currentMethod.isAnnotationPresent( Connect.class ) ){
-		Connect functionAnnotation = currentMethod.getAnnotation( Connect.class );
-		
-		
-		
+		final Connect functionAnnotation = currentMethod.getAnnotation( Connect.class );
+
+
+
 		if( functionAnnotation.name().equals( name ) ){
 		    // ok, this method must be mapped as a function!!    
-		    
+
 		    try {
 			// get a new function definer and build the function
-			IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
-			Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
-			
+			final IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
+			final Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
+
 			// now create the instance
-			IFunction function = (IFunction) functionClass.newInstance();
-			
+			final IFunction function = (IFunction) functionClass.newInstance();
+
 			// set the target object
 			((IFunctionBinder) function ).setTargetObject(target);
-			
+
 			// all done
 			return function;
-			
-		    } catch (Exception e){
+
+		    } catch (final Exception e){
 			e.printStackTrace();
 			throw new CannotBindFunctionException("Cannot create the function object ", e);
 		    }
 		}
-		    
+
 	    }
-	
-	
+
+
 	// if here there is no method to map as a function
 	throw new CannotBindFunctionException("No method found to be mapped as " + name + " on " + target.getClass() );
-	
-	
+
+
     }
-    
-    
+
+
+
+
+    /* (non-Javadoc)
+     * @see jfk.function.IFunctionBuilder#bindFunction(java.lang.Object, jfk.function.Function)
+     */
+    @Override
+    public IFunction bindFunction(final Object target, final String name )
+    throws CannotBindFunctionException {
+	// check arguments
+	if( (target == null) || (name == null) || (name.length() < 0) )
+	    throw new CannotBindFunctionException("Cannot bind the method call to a function on " + target.getClass() + " for identifier " + name);
+
+	// create a key for the cache entry
+	final String cacheKey = target.getClass().getName() + "_" + name;
+
+	// check if the function is already in the cache
+	if( cache.containsKey(cacheKey) )
+	    return cache.get(cacheKey);
+
+
+	// now iterate on each public method to see if one of the target object has the annotation
+	// of a function with the specified name, and in such case prepare to get the function object
+	for( final Method currentMethod : target.getClass().getMethods() )
+	    if( currentMethod.isAnnotationPresent( Function.class ) ){
+		final Function functionAnnotation = currentMethod.getAnnotation( Function.class );
+
+
+
+		if( functionAnnotation.name().equals( name ) ){
+		    // ok, this method must be mapped as a function!!    
+
+		    try {
+			// get a new function definer and build the function
+			final IFunctionClassDefiner definer = (IFunctionClassDefiner) JFK.getBean( IFunctionClassDefiner.class );
+			final Class functionClass = definer.getIFunctionClassDefinition(target, currentMethod);
+
+			// now create the instance
+			final IFunction function = (IFunction) functionClass.newInstance();
+
+			// set the target object
+			((IFunctionBinder) function ).setTargetObject(target);
+
+			// all done
+			cache.put(cacheKey, function);
+			return function;
+
+		    } catch (final Exception e){
+			throw new CannotBindFunctionException("Cannot create the function object ", e);
+		    }
+		}
+
+	    }
+
+
+	// if here there is no method to map as a function
+	throw new CannotBindFunctionException("No method found to be mapped as " + name + " on " + target.getClass() );
+
+    }
+
+
 }

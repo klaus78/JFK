@@ -19,8 +19,8 @@ public interface IFunctionClassDefiner {
      * @throws JFKException if something goes wrong
      */
     public abstract Class getIFunctionClassDefinition(
-						      Object targetObject,
-						      Method targetMethod)
-									  throws JFKException;
+                                                      Object targetObject,
+                                                      Method targetMethod)
+    throws JFKException;
 
 }

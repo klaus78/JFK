@@ -42,25 +42,25 @@ public class DelegateException extends JFKException {
 
     /**
      * @param message
-     * @param cause
      */
-    public DelegateException(String message, Throwable cause) {
-	super(message, cause);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param message
-     */
-    public DelegateException(String message) {
+    public DelegateException(final String message) {
 	super(message);
 	// TODO Auto-generated constructor stub
     }
 
     /**
+     * @param message
      * @param cause
      */
-    public DelegateException(Throwable cause) {
+    public DelegateException(final String message, final Throwable cause) {
+	super(message, cause);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param cause
+     */
+    public DelegateException(final Throwable cause) {
 	super(cause);
 	// TODO Auto-generated constructor stub
     }

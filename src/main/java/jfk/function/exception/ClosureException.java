@@ -42,15 +42,7 @@ public class ClosureException extends Exception {
     /**
      * @param arg0
      */
-    public ClosureException(String arg0) {
-	super(arg0);
-	// TODO Auto-generated constructor stub
-    }
-
-    /**
-     * @param arg0
-     */
-    public ClosureException(Throwable arg0) {
+    public ClosureException(final String arg0) {
 	super(arg0);
 	// TODO Auto-generated constructor stub
     }
@@ -59,8 +51,16 @@ public class ClosureException extends Exception {
      * @param arg0
      * @param arg1
      */
-    public ClosureException(String arg0, Throwable arg1) {
+    public ClosureException(final String arg0, final Throwable arg1) {
 	super(arg0, arg1);
+	// TODO Auto-generated constructor stub
+    }
+
+    /**
+     * @param arg0
+     */
+    public ClosureException(final Throwable arg0) {
+	super(arg0);
 	// TODO Auto-generated constructor stub
     }
 

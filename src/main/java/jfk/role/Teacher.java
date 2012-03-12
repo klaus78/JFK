@@ -1,14 +1,14 @@
 package jfk.role;
 
-public class Teacher implements ITeacher{
+public class Teacher implements IRole{
 
-	@Override
+	//@Override
 	public String getRoleName() {
 		return "Teacher role";
 	}
 
-	@Override
-	// @RoleMap (target = Person.class, method = "talk")
+	//@Override
+	@RoleMap (target = Person.class, method = "talk")
 	public void teach(String what) {
 		System.out.println("Teacher teaching " + what);	
 	}

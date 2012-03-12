@@ -26,6 +26,7 @@ import jfk.role.IRoleManager;
 import jfk.role.ITeacher;
 import jfk.role.Person;
 import jfk.role.RoleMap;
+import jfk.role.Teacher;
 
 public class RoleManagerImpl implements IRoleManager{
 
@@ -51,7 +52,7 @@ public class RoleManagerImpl implements IRoleManager{
     
 
 	
-	public Class addRoleOld(Class target, ITeacher role)
+	public Class addRoleOld(Class target, Teacher role)
 	{
 		if(target == null || role == null)
 			return null;
@@ -74,7 +75,7 @@ public class RoleManagerImpl implements IRoleManager{
 		    byte[] bytecode = null;
 		    
 		    // a name for the class to implement.
-		    final String roleClassName = target.getName() + " " + role.toString(); //ClassLoaderUtils.computeFunctionClassName( functionNameFromAnnotation, targetInstance.getClass() );
+		    final String roleClassName = target.getName() + " " + role.getRoleName(); //ClassLoaderUtils.computeFunctionClassName( functionNameFromAnnotation, targetInstance.getClass() );
 		    
 		    // create a new class for the specified name
 		    final CtClass newRoleCtClass = pool.makeClass( roleClassName );
@@ -84,9 +85,7 @@ public class RoleManagerImpl implements IRoleManager{
 		    
 		    // create a CtClass for ITeacher
 		    final CtClass iRoleCtClass = pool.makeInterface(interfaces[0].getName());
-		    
 		   
-		    
 
 		    // add a private target field to the role class
 		    String targetDataType = target.getName();
@@ -370,11 +369,10 @@ public class RoleManagerImpl implements IRoleManager{
 	}
 	
 
-	public void addRole(Class target, Class role)
+	public void addRole(Class target, IRole role)
 	{
 		// TODO: check the input parameters
 		
-
 		// key for the hash table
 		Long key = (long)target.hashCode() + (long)role.hashCode();
 	
@@ -382,25 +380,24 @@ public class RoleManagerImpl implements IRoleManager{
 		// and modifying them on the fly
 	    final ClassPool pool = ClassPool.getDefault();
 	    
-	    
+	    	    
 	    // a name for the class to implement.
-	    final String roleClassName = target.getName() + " " + role.getName(); 
+	    final String roleClassName = target.getName() + " " + role.getClass().getName(); 
+	    
 	    
 	    // create a new class for the specified name
 	    final CtClass newRoleCtClass = pool.makeClass( roleClassName );
 	    
-	    // extract the IRole interface
-	    Class<?> interfaces[] = role.getInterfaces();
-	    for(int i=0; i<interfaces.length; i++)
-	    {
-	    	 
-	    }
 	    
+	    Method[] classMethods = role.getClass().getDeclaredMethods();
+	    
+	    
+
+		Class<?>[] interfaces = role.getClass().getInterfaces();
 	    
 	    // create a CtClass for IRole
 	    final CtClass iRoleCtClass = pool.makeInterface(interfaces[0].getName());
 	    
-
 	    // add a private target field to the role class
 	    final String targetDataType = target.getName();
 	    
@@ -412,7 +409,6 @@ public class RoleManagerImpl implements IRoleManager{
 			newRoleCtClass.addField(targetField);
 		    
 			
-			
 		    // add a default constructor
 			
 		    final CtConstructor constructor = new CtConstructor(new CtClass[0], newRoleCtClass);
@@ -421,7 +417,7 @@ public class RoleManagerImpl implements IRoleManager{
 		    newRoleCtClass.addConstructor(constructor);
 		    
 		    // implements the interface role	
-		    Method[] roleMethods = role.getMethods(); 
+		    Method[] roleMethods = role.getClass().getDeclaredMethods(); 
 		    
 		    
 		    for (int i = 0; i < roleMethods.length; i++) {
@@ -437,111 +433,107 @@ public class RoleManagerImpl implements IRoleManager{
 		    	}
 		    	for(int a =0; a<annotations.length; a++)
 		    	{
-		    		 
 		    		if (annotations[a] instanceof RoleMap)
-		    		{
+		    		{   			
+		    			// here we have a method with a recognized annotation
 		    			
-		    			System.out.println("tentativo casting");
+		    			// The body of the method will be	
+		    			
+		    			// _target.method
+		    			
+		    			
 		    			RoleMap roleMap = (RoleMap)annotations[a];
-		    			System.out.println("casting riuscito");
 		    			
-		    			System.out.println("rolemap target " +
-		    			roleMap.target().toString()
-		    								);
+		    			if (roleMap.target().getName() != 
+		    							target.getName())
+		    			{
+		    				// TODO
+		    				// throw exception roleMap.target != target
+		    				
+		    			}
 		    			
-		    			System.out.println("rolemap method " +
-				    			roleMap.method()
-				    								);
+		    		
+		    			// create the body of the method to add
+		    			String methodSignature = "public " +
+				    		roleMethods[i].getGenericReturnType().toString() + " ";
+				    	
+				    	// return value type
+				    	String methodReturnType =
+				    		roleMethods[i].getGenericReturnType().toString();
+				    	
+				    	methodReturnType = methodReturnType.trim();
+
+				    	
+				    	methodReturnType = methodReturnType.trim();
+				    	
+				    	// method name
+				    	methodSignature += roleMethods[i].getName();
+				        
+				    	String methodName = roleMethods[i].getName();
+				    	
+				    	
+				    	Class<?>[] parameters = roleMethods[i].getParameterTypes();
+				    	
+				    	
+				    	methodSignature += "(";
+				    	methodName += "(";
+				    	
+				    	String stringParams = "(";
+				    	
+				        // method parameters 
+				        for(int p=0; p<parameters.length; p++)
+				        {
+				        	// param = roleMethods[i].getParameterTypes()
+				        	String param = 
+				        	parameters[p].getName() + " par" + p;
+				        
+				        	stringParams += "par" + p;
+				        	if(p < (parameters.length - 1) )
+				        	{
+				        		param += ",";
+				        		stringParams += ",";
+				        	}
+				        	methodSignature += param;
+				        	methodName += param;
+				        	// ......
+				        }
+				        
+				 
+				    	methodSignature += ")";
+				    	methodName += ")";
+				    	stringParams += ")";
+				    	
+				    	
+				    	// here is added the body of the method
+				    	String newMethodBody = methodSignature + "\n{\n";
+				    	
+				    	
+				    	if(methodReturnType.equals("void") != true) 
+				    	{
+				    		newMethodBody += " return";
+				    	}
+				   
+				    	newMethodBody += " _target." + roleMethods[i].getName() + stringParams + ";" + "\n}";
+				    	
+				    	
+				    	
+				    	System.out.println("method to add to interface: " + methodSignature);
+				    	
+				    	CtMethod newMethodSgn = CtMethod.make(
+				    			methodSignature + ";",
+				    			iRoleCtClass);
+				    	
+				    	iRoleCtClass.addMethod(newMethodSgn);
 		    		}
 		    							
 		    	}
 		    	
-
 		    	
-		    	String methodSignature = "public " +
-		    	roleMethods[i].getGenericReturnType().toString() + " ";
-		    	
-		    	// return value type
-		    	String methodReturnType =
-		    		roleMethods[i].getGenericReturnType().toString();
-		    	
-		    	methodReturnType = methodReturnType.trim();
-		    	
-		    	// method name
-		    	methodSignature += roleMethods[i].getName();
-		        
-		    	String methodName = roleMethods[i].getName();
-		    	
-		    	
-		    	// exclude the methods that each java class has
-		    	/*
-		    	Object o = new Object();
-		    	Method[] objMethods = o.getClass().getMethods();
-		    	Boolean skip = false;
-		    	for(int m=0; m<objMethods.length; m++)
-		    	{
-		    		if (roleMethods[i].hashCode() == objMethods[m].hashCode())
-		    			skip = true;
-		    	}
-		    	
-		    	if(skip == true)
-		    		continue;
-		    	*/
-		    	
-		    	Class<?>[] parameters = roleMethods[i].getParameterTypes();
-		    	
-		    	
-		    	methodSignature += "(";
-		    	methodName += "(";
-		    	
-		    	String stringParams = "(";
-		    	
-		        // method parameters 
-		        for(int p=0; p<parameters.length; p++)
-		        {
-		        	// param = roleMethods[i].getParameterTypes()
-		        	String param = 
-		        	parameters[p].getName() + " par" + p;
-		        
-		        	stringParams += "par" + p;
-		        	if(p < (parameters.length - 1) )
-		        	{
-		        		param += ",";
-		        		stringParams += ",";
-		        	}
-		        	methodSignature += param;
-		        	methodName += param;
-		        	// ......
-		        }
-		        
-		 
-		    	methodSignature += ")";
-		    	methodName += ")";
-		    	stringParams += ")";
-		    	
-		    	
-		    	// here is added the body of the method
-		    	String newMethodBody = methodSignature + "\n{\n";
-		    	
-		    	
-		    	if(methodReturnType.equals("void") != true) 
-		    	{
-		    		newMethodBody += " return";
-		    	}
-		   
-		    	newMethodBody += " _target." + roleMethods[i].getName() + stringParams + ";" + "\n}";
-		    	
-		    	
-		    	
-		    	System.out.println("method to add to interface: " + methodSignature);
-		    	
-		    	CtMethod newMethodSgn = CtMethod.make(
-		    			methodSignature + ";",
-		    			iRoleCtClass);
-		    	
-		    	iRoleCtClass.addMethod(newMethodSgn);
 		      } // end for (int i = 0; i < roleMethods.length; i++)  
-		    
+		   
+		
+		    //HashMap<Long, Class> allClasses = new HashMap<Long, Class>();
+		    allClasses.put(key, iRoleCtClass.toClass());
 		} catch (CannotCompileException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

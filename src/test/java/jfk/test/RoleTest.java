@@ -21,6 +21,7 @@ public class RoleTest {
 		
 		roleManager.addRole(classPerson, t);
 		
-		// IRole pRole = roleManager.getAsRole(classPerson, t);
+		IRole rGen = roleManager.getAsRole(classPerson, t);
+		//System.out.println(rGen.getRoleName() + " roleNew");
 	}
 }

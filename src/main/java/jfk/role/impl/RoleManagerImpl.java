@@ -2,6 +2,8 @@ package jfk.role.impl;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -15,6 +17,7 @@ import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewConstructor;
+import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import jfk.function.IFunction;
@@ -306,14 +309,6 @@ public class RoleManagerImpl implements IRoleManager{
 		   
 		    	newMethodBody += " _target." + roleMethods[i].getName() + stringParams + ";" + "\n}";
 		    	
-
-		    	/*
-		    	newMethodBody = 
-			    "public void talk(java.lang.String par0)\n" +
-			    "{\n" + 
-			     "\tSystem.out.println(par0);\n" +
-			    "}";
-			    */
 		    	System.out.println("method to add to class = " + newMethodBody);
 
 		    	
@@ -324,7 +319,11 @@ public class RoleManagerImpl implements IRoleManager{
 		    	newRoleCtClass.addMethod(newMethod);
 		      } 
 		    		    
-
+		    // ctclass must implement iTeacher
+		    newRoleCtClass.addInterface(iRoleCtClass);
+		 		    
+		    
+		    
 		    return newRoleCtClass.toClass(); 
 		    
 		}
@@ -382,21 +381,23 @@ public class RoleManagerImpl implements IRoleManager{
 	    
 	    	    
 	    // a name for the class to implement.
-	    final String roleClassName = target.getName() + " " + role.getClass().getName(); 
+	    final String roleClassName = target.getSimpleName() + role.getClass().getSimpleName(); 
 	    
 	    
 	    // create a new class for the specified name
 	    final CtClass newRoleCtClass = pool.makeClass( roleClassName );
 	    
 	    
-	    Method[] classMethods = role.getClass().getDeclaredMethods();
-	    
-	    
 
 		Class<?>[] interfaces = role.getClass().getInterfaces();
 	    
+		
 	    // create a CtClass for IRole
 	    final CtClass iRoleCtClass = pool.makeInterface(interfaces[0].getName());
+	    newRoleCtClass.addInterface(iRoleCtClass);
+	    
+	    Method[] interfaceMethods = interfaces[0].getDeclaredMethods();
+	    
 	    
 	    // add a private target field to the role class
 	    final String targetDataType = target.getName();
@@ -409,23 +410,56 @@ public class RoleManagerImpl implements IRoleManager{
 			newRoleCtClass.addField(targetField);
 		    
 			
-		    // add a default constructor
+		    // add a default construct
 			
-		    final CtConstructor constructor = new CtConstructor(new CtClass[0], newRoleCtClass);
-		    constructor.setBody("{_target = $0;}");
+		    // 
+			String strConstructor = 
+				"public " + roleClassName + "(Class param)" +
+				"{_target = param;}";
+			
+			System.out.println(strConstructor  + " body");
+			final CtConstructor constructor =
+				CtNewConstructor.make(strConstructor, newRoleCtClass);
+				//new CtConstructor(new CtClass[0], newRoleCtClass);
+		    
+			constructor.setModifiers(Modifier.PUBLIC);
+		    
 		    
 		    newRoleCtClass.addConstructor(constructor);
 		    
 		    // implements the interface role	
 		    Method[] roleMethods = role.getClass().getDeclaredMethods(); 
 		    
-		    
 		    for (int i = 0; i < roleMethods.length; i++) {
+		    		
+		    	boolean methodInInterface = false;
+		    	for(int m=0; m<interfaceMethods.length; m++)
+		    	{
+		    		//TODO: 21.03.2012
+		    		// I must add the methods contained in IRole.
+		    		// not only the methods with an annotation 
+		    		
+		    		// TODO: 21.03.2012
+		    		// Find a sensible way to compare two method headers
+		    		 
+		    		if(roleMethods[i].getName() != 	interfaceMethods[m].getName()) 
+		    			continue;
+		    		
+		    		
+				    String funBody = "public String getRoleName() " +
+				    		"{ return \"Role implemented\"; }";
+				    
+				    CtMethod ctMet = CtNewMethod.make(
+				    		funBody,
+			                 newRoleCtClass);
+				    newRoleCtClass.addMethod(ctMet);
+		    		
+		    		methodInInterface = true;
+		    	}// for(int m=0; m<interfaceMethods.length; m++)
+		    	
 		    	
 		    	// analyze the annotation of the method
 		    	Annotation[] annotations = roleMethods[i].getAnnotations();
-
-		    	
 		    	// a role method must have an annotation
 		    	if(annotations.length == 0)
 		    	{
@@ -435,12 +469,9 @@ public class RoleManagerImpl implements IRoleManager{
 		    	{
 		    		if (annotations[a] instanceof RoleMap)
 		    		{   			
-		    			// here we have a method with a recognized annotation
-		    			
+		    			// here we have a method with a recognized annotation	
 		    			// The body of the method will be	
-		    			
 		    			// _target.method
-		    			
 		    			
 		    			RoleMap roleMap = (RoleMap)annotations[a];
 		    			
@@ -448,11 +479,17 @@ public class RoleManagerImpl implements IRoleManager{
 		    							target.getName())
 		    			{
 		    				// TODO
-		    				// throw exception roleMap.target != target
-		    				
+		    				// throw exception roleMap.target != target	
 		    			}
 		    			
+		    			if(roleMap.method() != roleMethods[i].getName())
+		    			{
+		    				// TODO
+		    				// throw exception roleMap.method != currentMethod
+		    			}
 		    		
+		    			
+		    			
 		    			// create the body of the method to add
 		    			String methodSignature = "public " +
 				    		roleMethods[i].getGenericReturnType().toString() + " ";
@@ -464,7 +501,6 @@ public class RoleManagerImpl implements IRoleManager{
 				    	methodReturnType = methodReturnType.trim();
 
 				    	
-				    	methodReturnType = methodReturnType.trim();
 				    	
 				    	// method name
 				    	methodSignature += roleMethods[i].getName();
@@ -513,34 +549,58 @@ public class RoleManagerImpl implements IRoleManager{
 				    		newMethodBody += " return";
 				    	}
 				   
-				    	newMethodBody += " _target." + roleMethods[i].getName() + stringParams + ";" + "\n}";
 				    	
-				    	
+				    	newMethodBody += " _target." + roleMap.method() + stringParams + ";" + "\n}";
 				    	
 				    	System.out.println("method to add to interface: " + methodSignature);
 				    	
-				    	CtMethod newMethodSgn = CtMethod.make(
-				    			methodSignature + ";",
-				    			iRoleCtClass);
+				    	System.out.println("method body to add to interface: " + newMethodBody);
 				    	
-				    	iRoleCtClass.addMethod(newMethodSgn);
+				    	
+				    	CtMethod newMethodSgn = CtMethod.make(
+				    			newMethodBody + ";",
+				    			newRoleCtClass);
+				    	
+				    	
+				    	newRoleCtClass.addMethod(newMethodSgn);
 		    		}
 		    							
 		    	}
-		    	
-		    	
+		    		
 		      } // end for (int i = 0; i < roleMethods.length; i++)  
 		   
-		
-		    //HashMap<Long, Class> allClasses = new HashMap<Long, Class>();
-		    allClasses.put(key, iRoleCtClass.toClass());
+		    try {
+				newRoleCtClass.writeFile("/home/claudio/Templates");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		    
+			Class finalClass = newRoleCtClass.toClass();
+		    allClasses.put(key, finalClass);
+		    
+		    
+			//System.out.println("dddd " + ctors.length);
+			
+			//System.out.println("dddd " + ctors[0].toString());
+			//Constructor ctr = classTest.getDeclaredConstructor(Class.class);//.newInstance();
+			//System.out.println("dddd " + ctr.toString());
+			
+			//IRole classToReturn = (IRole) ctr.newInstance(target);
+			
+			    	
+		    
 		} catch (CannotCompileException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		    
 		
-	    
-		//allClasses.put(key, target);
 	}
 	
 	
@@ -550,6 +610,47 @@ public class RoleManagerImpl implements IRoleManager{
 	
 	public IRole getAsRole(Class target, IRole role)
 	{
+		// key for the hash table
+		Long key = (long)target.hashCode() + (long)role.hashCode();
+	
+		if (allClasses.containsKey(key) == false)
+		{
+			// TODO
+			// throw exception
+		}
+		
+		
+		
+		try {
+			Class classTest = allClasses.get(key);
+			System.out.println("CIAO " + classTest.getName());
+			
+			Constructor ctr = classTest.getDeclaredConstructor(Class.class);//.newInstance();
+			
+			
+			IRole classToReturn = (IRole) ctr.newInstance(target);
+			
+			return classToReturn;
+			
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return role;
 	}
 

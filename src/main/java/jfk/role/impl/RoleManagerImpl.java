@@ -579,9 +579,6 @@ public class RoleManagerImpl implements IRoleManager{
 			Class finalClass = newRoleCtClass.toClass();
 		    allClasses.put(key, finalClass);
 		    
-		    
-			//System.out.println("dddd " + ctors.length);
-			
 			//System.out.println("dddd " + ctors[0].toString());
 			//Constructor ctr = classTest.getDeclaredConstructor(Class.class);//.newInstance();
 			//System.out.println("dddd " + ctr.toString());

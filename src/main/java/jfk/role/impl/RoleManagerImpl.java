@@ -60,17 +60,7 @@ public class RoleManagerImpl implements IRoleManager{
 		if(target == null || role == null)
 			return null;
 		
-		// here should I create on the fly a class that implements ITeacher.
-		// (?)
-		
-		// class tmpClass implements ITeacher
-		// {
-		  
-		// }
-		
-		try {
-			
-			
+		try {	
 			// get the class pool for working with classes and modifying them on the fly
 		    final ClassPool pool = ClassPool.getDefault();
 		    
@@ -92,8 +82,6 @@ public class RoleManagerImpl implements IRoleManager{
 
 		    // add a private target field to the role class
 		    String targetDataType = target.getName();
-		    
-		    System.out.println("targetDataType = " + targetDataType);
 		    
 		    CtField targetField = CtField.make("private " + targetDataType + " _target;", newRoleCtClass);		    
 		    
@@ -188,9 +176,6 @@ public class RoleManagerImpl implements IRoleManager{
 		   
 		    	newMethodBody += " _target." + roleMethods[i].getName() + stringParams + ";" + "\n}";
 		    	
-		    	
-		    	
-		    	System.out.println("method to add to interface: " + methodSignature);
 		    	
 		    	CtMethod newMethodSgn = CtMethod.make(
 		    			methodSignature + ";",
@@ -387,8 +372,19 @@ public class RoleManagerImpl implements IRoleManager{
 	    // create a new class for the specified name
 	    final CtClass newRoleCtClass = pool.makeClass( roleClassName );
 	    
+		try {
+			CtClass roleCtClass = pool.get(role.getClass().getCanonicalName());
+			newRoleCtClass.setSuperclass(roleCtClass);
+		} catch (NotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		catch (CannotCompileException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 	    
-
 		Class<?>[] interfaces = role.getClass().getInterfaces();
 	    
 		
@@ -396,7 +392,6 @@ public class RoleManagerImpl implements IRoleManager{
 	    final CtClass iRoleCtClass = pool.makeInterface(interfaces[0].getName());
 	    newRoleCtClass.addInterface(iRoleCtClass);
 	    
-	    Method[] interfaceMethods = interfaces[0].getDeclaredMethods();
 	    
 	    
 	    // add a private target field to the role class
@@ -404,39 +399,29 @@ public class RoleManagerImpl implements IRoleManager{
 	    
 	    
 	    try {
-	    	System.out.println("private " + targetDataType 
-											 + " _target;");
 			CtField targetField = CtField.make("private " + targetDataType 
 											 + " _target;", newRoleCtClass);
 			
-	    	
-	    	
 			newRoleCtClass.addField(targetField);
-		    
 			
-		    // add a default construct
-			
-		    // 
+		    // add a constructor 
 			String strConstructor = 
 				"public " + roleClassName + "(" + targetDataType + " param)" +
 				"{_target = param;}";
 			
-			System.out.println(strConstructor  + " body");
 			final CtConstructor constructor =
 				CtNewConstructor.make(strConstructor, newRoleCtClass);
-				//new CtConstructor(new CtClass[0], newRoleCtClass);
-		    
+			
 			constructor.setModifiers(Modifier.PUBLIC);
 		    
-		    
 		    newRoleCtClass.addConstructor(constructor);
+		    
+		    Method[] interfaceMethods = interfaces[0].getDeclaredMethods();
 		    
 		    // implements the interface role	
 		    Method[] roleMethods = role.getClass().getDeclaredMethods(); 
 		    
 		    for (int i = 0; i < roleMethods.length; i++) {
-		    		
-		    	boolean methodInInterface = false;
 		    	for(int m=0; m<interfaceMethods.length; m++)
 		    	{
 		    		//TODO: 21.03.2012
@@ -458,7 +443,6 @@ public class RoleManagerImpl implements IRoleManager{
 			                 newRoleCtClass);
 				    newRoleCtClass.addMethod(ctMet);
 		    		
-		    		methodInInterface = true;
 		    	}// for(int m=0; m<interfaceMethods.length; m++)
 		    	
 		    	
@@ -556,11 +540,6 @@ public class RoleManagerImpl implements IRoleManager{
 				    	
 				    	newMethodBody += " _target." + roleMap.method() + stringParams + ";" + "\n}";
 				    	
-				    	System.out.println("method to add to interface: " + methodSignature);
-				    	
-				    	System.out.println("method body to add to interface: " + newMethodBody);
-				    	
-				    	
 				    	CtMethod newMethodSgn = CtMethod.make(
 				    			newMethodBody + ";",
 				    			newRoleCtClass);
@@ -572,13 +551,6 @@ public class RoleManagerImpl implements IRoleManager{
 		    	}
 		    		
 		      } // end for (int i = 0; i < roleMethods.length; i++)  
-		   
-		    try {
-				newRoleCtClass.writeFile("/home/claudio/Templates");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		    
 			
 			Class finalClass = newRoleCtClass.toClass();
@@ -618,16 +590,8 @@ public class RoleManagerImpl implements IRoleManager{
 		
 		try {
 			Class classTest = allClasses.get(key);
-			System.out.println("CIAO " + classTest.getName());
-			
-			for( Constructor c : classTest.getConstructors() ){
-				System.out.println("Costruttore " + c.toGenericString() );
-				for( Class f : c.getParameterTypes() )
-				System.out.println("\t" + f.getName());
-			}
 			
 			Constructor ctr = classTest.getDeclaredConstructor(target.getClass());//.newInstance();
-			
 			
 			IRole classToReturn = (IRole) ctr.newInstance(target);
 			

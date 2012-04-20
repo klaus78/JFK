@@ -20,8 +20,12 @@ public class RoleTest {
 		IRole t = new Teacher();
 		
 		roleManager.addRole(classPerson, t);
-		
-		IRole rGen = roleManager.getAsRole(classPerson, t);
+		// CtClass da creare deve estendere la classe Teacher in 
+		// quanto deve potere essere castata a Teacher
+		IRole rGen = roleManager.getAsRole(p, t);
+		System.out.println("new role " + rGen.getRoleName());
+		//Teacher tTrasf = (Teacher)rGen;
+		//tTrasf.teach("I am a teacher");
 		//System.out.println(rGen.getRoleName() + " roleNew");
 	}
 }

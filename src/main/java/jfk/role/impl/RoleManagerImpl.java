@@ -404,9 +404,13 @@ public class RoleManagerImpl implements IRoleManager{
 	    
 	    
 	    try {
+	    	System.out.println("private " + targetDataType 
+											 + " _target;");
 			CtField targetField = CtField.make("private " + targetDataType 
 											 + " _target;", newRoleCtClass);
 			
+	    	
+	    	
 			newRoleCtClass.addField(targetField);
 		    
 			
@@ -414,7 +418,7 @@ public class RoleManagerImpl implements IRoleManager{
 			
 		    // 
 			String strConstructor = 
-				"public " + roleClassName + "(Class param)" +
+				"public " + roleClassName + "(" + targetDataType + " param)" +
 				"{_target = param;}";
 			
 			System.out.println(strConstructor  + " body");
@@ -576,15 +580,10 @@ public class RoleManagerImpl implements IRoleManager{
 				e.printStackTrace();
 			}
 		    
+			
 			Class finalClass = newRoleCtClass.toClass();
 		    allClasses.put(key, finalClass);
 		    
-			//System.out.println("dddd " + ctors[0].toString());
-			//Constructor ctr = classTest.getDeclaredConstructor(Class.class);//.newInstance();
-			//System.out.println("dddd " + ctr.toString());
-			
-			//IRole classToReturn = (IRole) ctr.newInstance(target);
-			
 			    	
 		    
 		} catch (CannotCompileException e) {
@@ -605,10 +604,10 @@ public class RoleManagerImpl implements IRoleManager{
 	
 	
 	
-	public IRole getAsRole(Class target, IRole role)
+	public IRole getAsRole(Object target, IRole role)
 	{
 		// key for the hash table
-		Long key = (long)target.hashCode() + (long)role.hashCode();
+		Long key = (long)target.getClass().hashCode() + (long)role.hashCode();
 	
 		if (allClasses.containsKey(key) == false)
 		{
@@ -617,12 +616,17 @@ public class RoleManagerImpl implements IRoleManager{
 		}
 		
 		
-		
 		try {
 			Class classTest = allClasses.get(key);
 			System.out.println("CIAO " + classTest.getName());
 			
-			Constructor ctr = classTest.getDeclaredConstructor(Class.class);//.newInstance();
+			for( Constructor c : classTest.getConstructors() ){
+				System.out.println("Costruttore " + c.toGenericString() );
+				for( Class f : c.getParameterTypes() )
+				System.out.println("\t" + f.getName());
+			}
+			
+			Constructor ctr = classTest.getDeclaredConstructor(target.getClass());//.newInstance();
 			
 			
 			IRole classToReturn = (IRole) ctr.newInstance(target);

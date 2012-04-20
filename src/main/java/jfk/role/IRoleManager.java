@@ -11,5 +11,5 @@ public interface IRoleManager {
 	public void addRole(Class target, IRole role);
 	
 	// public bool addRole(Class target, Interface irole)
-    public IRole getAsRole(Class target, IRole role);
+    public IRole getAsRole(Object target, IRole role);
 }

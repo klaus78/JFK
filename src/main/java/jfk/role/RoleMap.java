@@ -8,11 +8,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * This annotation is used to mark a method as a "slot" to connect to a delegate.
+ *  This annotation is used to make a connection between
+ *  a class and one of its methods. This method can be used 
+ *  by a method in a role class 
  * 
  * @author Claudio Varini - varini.claudio (at) gmail.com
  *
  */
+
 //the annotation must be present at run-time!
 @Retention( RetentionPolicy.RUNTIME )
 // the annotation can be applied to a method!
@@ -21,7 +24,7 @@ import java.lang.annotation.Target;
 public @interface RoleMap {
 
 	/**
-     * The name of the class that can be extented by a role.
+     * The name of the class that can be extended by a role.
      * @return the class 
      */
 	public Class target(); 

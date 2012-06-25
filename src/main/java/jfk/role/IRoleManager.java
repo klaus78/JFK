@@ -10,6 +10,13 @@ public interface IRoleManager {
      */
 	public void addRole(Class target, IRole role);
 	
-	// public bool addRole(Class target, Interface irole)
+	/**
+     * Return an instance of the role applied to the target class.
+     * Note that before you need to call addRole, otherwise you get
+     * null because no role was added before to the target class.
+     * @param target the class implementing the role
+     * @param role the role implemented by the target
+     * @return IRole an interface to the methods of the role.  
+     */
     public IRole getAsRole(Object target, IRole role);
 }

@@ -39,11 +39,11 @@ import static org.junit.Assert.*;
  */
 public class FunctionTest {
 
-    // @Before
+    @Before
     public void setUp() throws Exception {
     }
 
-    // @Test
+    @Test
     public void testFunctionBuilder(){
 	// get a new function builder
 	IFunctionBuilder fBuilder = JFK.getFunctionBuilder();

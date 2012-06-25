@@ -28,6 +28,7 @@ import jfk.function.IClosureBuilder;
 import jfk.function.IFunctionBuilder;
 import jfk.function.classloaders.IDelegateConnector;
 import jfk.function.delegates.IDelegateManager;
+import jfk.role.*;
 
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -105,5 +106,14 @@ public class JFK {
 	return (IFunctionBuilder) xmlBeanFactory.getBean( IFunctionBuilder.class.getSimpleName() );
     }
 
+    
+    /**
+     * Provides the interface for working with roles.
+     * @return the role interface to use
+     */
+    public static synchronized IRoleManager getRoleManager() {
+    	return (IRoleManager) xmlBeanFactory.getBean(IRoleManager.class);
+    }
 
+    
 }

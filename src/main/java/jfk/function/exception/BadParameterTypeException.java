@@ -73,8 +73,8 @@ public class BadParameterTypeException extends JFKException {
      * @param cause
      */
     public BadParameterTypeException(final Throwable cause) {
-	super(cause);
-	// TODO Auto-generated constructor stub
+		super(cause);
+		// TODO Auto-generated constructor stub
     }
 
     /**
@@ -83,8 +83,8 @@ public class BadParameterTypeException extends JFKException {
      * @return the requiredType value
      */
     public synchronized final Class getRequiredType() {
-	// return the value of the this.requiredType field
-	return requiredType;
+		// return the value of the this.requiredType field
+		return requiredType;
     }
 
     /**
@@ -103,8 +103,8 @@ public class BadParameterTypeException extends JFKException {
      * @param requiredType the requiredType to set
      */
     public synchronized final void setRequiredType(final Class requiredType) {
-	// set the value of the this.requiredType field
-	this.requiredType = requiredType;
+		// set the value of the this.requiredType field
+		this.requiredType = requiredType;
     }
 
     /**
@@ -113,8 +113,8 @@ public class BadParameterTypeException extends JFKException {
      * @param suppliedType the suppliedType to set
      */
     public synchronized final void setSuppliedType(final Class suppliedType) {
-	// set the value of the this.suppliedType field
-	this.suppliedType = suppliedType;
+		// set the value of the this.suppliedType field
+		this.suppliedType = suppliedType;
     }
 
 

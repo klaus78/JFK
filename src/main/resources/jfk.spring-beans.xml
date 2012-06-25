@@ -35,5 +35,9 @@
 		scope="prototype">
    	</bean>
    	
+   	<!--  the default role manager to use -->
+	<bean id="IRoleManager" class="jfk.role.impl.RoleManagerImpl"
+		scope="prototype">
+   	</bean>
 
 </beans>

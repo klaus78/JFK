@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class RoleTest {
 
-	//@Test
+	@Test
     public void roleBuilder()
 	{
 		// get an instance of the role manager

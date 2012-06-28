@@ -52,7 +52,7 @@ import static org.junit.Assert.*;
  */
 public class ClassLoaderTest {
 
-    // @Test
+    @Test
     public void testClassLoaderUtils(){
 	// the set method name should always be the same
 	String name1 = ClassLoaderUtils.getSetTargetMethodName();
@@ -88,7 +88,7 @@ public class ClassLoaderTest {
     }
     
     
-    // @Test
+    @Test
     public void testFunctionClassDefinition() throws ClassNotFoundException, InstantiationException, IllegalAccessException, JFKException{
 	
 	// get a new class loader
@@ -155,7 +155,7 @@ public class ClassLoaderTest {
 
     
     
-    // @Test
+    @Test
     public void testEndUserApi() throws JFKException{
 	// create the dummy object
 	DummyClass dummy = new DummyClass();
@@ -227,7 +227,7 @@ public class ClassLoaderTest {
     
     
     
-    // @Test
+    @Test
     public void testCache() throws CannotBindFunctionException{
 	
 	// create the dummy object
@@ -245,7 +245,7 @@ public class ClassLoaderTest {
     
     
     
-    // @Test
+    @Test
     public void speedTest() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, JFKException{
 	// create the dummy object
 	DummyClass dummy = new DummyClass();

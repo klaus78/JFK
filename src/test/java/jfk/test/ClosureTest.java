@@ -47,12 +47,12 @@ public class ClosureTest {
     /**
      * @throws java.lang.Exception
      */
-    // @Before
+    @Before
     public void setUp() throws Exception {
     }
     
     
-    // @Test
+    @Test
     public void testClosureBuilder() throws ClosureException, BadArityException, BadParameterTypeException{
 	// get a new closure builder
 	IClosureBuilder builder = (IClosureBuilder) JFK.getBean( IClosureBuilder.class );

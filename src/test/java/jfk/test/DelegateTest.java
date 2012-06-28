@@ -49,12 +49,12 @@ public class DelegateTest {
     /**
      * @throws java.lang.Exception
      */
-    // @Before
+    @Before
     public void setUp() throws Exception {
     }
 
     
-    // @Test
+    @Test
     public void testDelegateManager() throws CannotConnectDelegateException, AlreadyImplementedDelegateException{
 	
 	// get a new delegate manager

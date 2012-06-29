@@ -235,6 +235,7 @@ public class RoleManagerImpl implements IRoleManager{
 	
 	public IRole getAsRole(Object target, IRole role)
 	{
+		
 		// key for the hash table
 		Long key = (long)target.getClass().hashCode() + (long)role.hashCode();
 	

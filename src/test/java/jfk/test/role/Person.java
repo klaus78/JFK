@@ -1,10 +1,17 @@
 package jfk.test.role;
 
 public class Person {
-
-	public void talk(String what)
+	
+	public Person(String name)
 	{
-		System.out.println("Person says " + what);
+		_name = name;
 	}
 	
+	public void talk(String what)
+	{
+		System.out.println("Person of name " + _name + " says " + what);
+	}
+	
+	
+	String _name;
 }

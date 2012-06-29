@@ -14,22 +14,35 @@ public class RoleTest {
 	{
 		// get an instance of the role manager
 		IRoleManager roleManager = JFK.getRoleManager();
-		
-		Person person = new Person();
-		
+	
 		// create a role
 		IRole teacherRole = new Teacher();
-		
-		// teacher role is added to the instance of Person
-		roleManager.addRole(person.getClass(), teacherRole);
 	
-		// return the instance of Person implementing the teacher role 
-		Teacher personToTeacher = (Teacher)roleManager.getAsRole(person, teacherRole);
+		// a data type class Person extended to teacher role 
+		// is added to the roleManager
+		roleManager.addRole(Person.class, teacherRole);
+	
 		
-		// now a person can also teach
-		// note that here the method teacher.teach actually calls 
-		// person.talk internally
-		personToTeacher.teach("I am a person but I am teaching like a teacher");
+		// create a new instance of person with name Paul
+		Person personPaul = new Person("Paul");
+		
+		// return the instance of Person Paul extended with the teacher role 
+		Teacher personPaulToTeacher = 
+			(Teacher)roleManager.getAsRole(personPaul, teacherRole);
+		
+		// now the Person Paul can also teach
+		// note that here the method teacher.teach internally calls 
+		// person.talk 
+		personPaulToTeacher.teach("I am a person but I am teaching like a teacher");
+		
+	
+		
+		Person personMarc = new Person("Marc");
+		// return the instance of Person Marc extended with the teacher role 
+		Teacher personMarcToTeacher = 
+			(Teacher)roleManager.getAsRole(personMarc, teacherRole);
+		
+		personMarcToTeacher.teach("I am Marc working as teacher");
 		
 		
 		// note that if you create an instance of teacher, i.e. you use the

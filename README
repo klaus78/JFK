@@ -1,0 +1,4 @@
+JFK stands for Java Functional Kernel, and it is a framework that brings function power to the Java World. Java does not use the term "function", preferring the term "method", but the two are, at least for what concerns JFK, the same. A function/method is a code block that you can call passing arguments on the stack and getting back a result.
+But while in Java first-class elements are classes, and therefore you cannot abstract a method outside a class, JFK brings the power of function pointers to Java, allowing you to use functions (or methods, if you prefer such term) as first-class entities too.
+
+For more info please see http://fluca1978.blogspot.it/search/label/jfk

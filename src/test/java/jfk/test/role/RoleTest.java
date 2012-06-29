@@ -15,18 +15,29 @@ public class RoleTest {
 		// get an instance of the role manager
 		IRoleManager roleManager = JFK.getRoleManager();
 		
-		Person p = new Person();
+		Person person = new Person();
 		
 		// create a role
-		IRole t = new Teacher();
+		IRole teacherRole = new Teacher();
 		
-		// a role is added to the instance of Person
-		roleManager.addRole(p.getClass(), t);
+		// teacher role is added to the instance of Person
+		roleManager.addRole(person.getClass(), teacherRole);
 	
-		// the instance of Person is converted to an instance of Teacher
-		Teacher tTrasf = (Teacher)roleManager.getAsRole(p, t);
+		// return the instance of Person implementing the teacher role 
+		Teacher personToTeacher = (Teacher)roleManager.getAsRole(person, teacherRole);
 		
 		// now a person can also teach
-		tTrasf.teach("I am a person but I am teaching like a teacher");
+		// note that here the method teacher.teach actually calls 
+		// person.talk internally
+		personToTeacher.teach("I am a person but I am teaching like a teacher");
+		
+		
+		// note that if you create an instance of teacher, i.e. you use the
+		// constructor, when you call teacher.teach then the method is executed
+		// and 
+		Teacher teacher = new Teacher();
+		teacher.teach("I am only a teacher");
+		
+		
 	}
 }

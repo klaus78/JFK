@@ -34,7 +34,7 @@ public class RoleTest {
 		
 		// note that if you create an instance of teacher, i.e. you use the
 		// constructor, when you call teacher.teach then the method is executed
-		// and 
+		// and no call to method person.talk happens
 		Teacher teacher = new Teacher();
 		teacher.teach("I am only a teacher");
 		

@@ -33,7 +33,6 @@ public class RoleManagerImpl implements IRoleManager{
 
 	public void addRole(Class target, IRole role)
 	{
-
 		// key for the hash table
 		Long key = (long)target.hashCode() + (long)role.hashCode();
 	

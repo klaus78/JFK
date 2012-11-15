@@ -126,22 +126,16 @@ public class RoleManagerImpl implements IRoleManager{
 		    {	
 			// TODO: 21.03.2012
 			// Find a sensible way to compare two method headers
-		    		 
+
+
 			if(roleMethods[i].getName() != 	interfaceMethods[m].getName()) 
 			    continue;
 		    		
-		    		
 
-			String getRoleNameMethodBodySource = String.format( "public %s( %s ){ return %s.%s( %s )",
-									    IRole.METHOD_NAME_GET_ROLE_NAME,
-									    IRole.METHOD_ARGS_GET_ROLE_NAME,
-									    targetFieldName,
-									    IRole.METHOD_NAME_GET_ROLE_NAME,
-									    IRole.METHOD_ARGS_GET_ROLE_NAME 
-									    );
-				    
-			CtMethod ctMet = CtNewMethod.make( getRoleNameMethodBodySource,
-							  newRoleCtClass);
+			String currentDelegateMethodBodySource = getSourceCodeForDelegateMethod( interfaceMethods[ m ], "this", null );		    		
+			CtMethod ctMet = CtNewMethod.make( currentDelegateMethodBodySource,
+							   newRoleCtClass);
+
 			newRoleCtClass.addMethod(ctMet);
 		    		
 		    }// for(int m=0; m<interfaceMethods.length; m++)
@@ -176,61 +170,12 @@ public class RoleManagerImpl implements IRoleManager{
 		    			
 		    			
 		    			
-										  
+
 				    	    	
-				Class<?>[] parameters = roleMethods[i].getParameterTypes();
-
-				// list of parameters with their types
-				StringBuffer paramsBuffer     = new StringBuffer( 10 * parameters.length );
-				// list of parameter names
-				StringBuffer paramsNameBuffer = new StringBuffer( 10 * parameters.length );
-				    	
-				// method parameters 
-				for(int p=0; p<parameters.length; p++)
-				    {
-					// compute the name of the current parameter
-					String currentParamName = String.format( "par%d", p );
-
-					paramsNameBuffer.append( String.format( "%s %s",
-										( p > 0 ? "," : "" ),
-										currentParamName )
-								 );
-					paramsBuffer.append( String.format( "%s %s %s",
-									    ( p > 0 ? "," : "" ),
-									    parameters[p].getName(),
-									    currentParamName
-									    )
-							     );
-					
-				    }
-				        
-
-				// create the body of the method to add
-				String connectorMethodSignatureSourceCode = String.format( "public %s %s( %s )",
-											   roleMethods[i].getGenericReturnType().toString(),
-											   roleMethods[i].getName(),
-											   paramsBuffer.toString()
-											   );
-
-				 
-				    	
-				    	
-				// here is added the body of the method
-				String connectorMethodBodySourceCode = String.format( "%s { %s %s.%s( %s ); }",
-										      connectorMethodSignatureSourceCode,
-										      ( "void".equals( roleMethods[i].getGenericReturnType().toString() ) ? "" : "return" ),
-										      targetFieldName,
-										      roleMap.method(),
-										      paramsNameBuffer.toString()
-										      );
-
-
-
-				logger.debug( String.format( "[ROLE] Connector method signature [%s]", connectorMethodSignatureSourceCode ) );
-				logger.debug( String.format( "[ROLE] Connector method body [%s]", connectorMethodBodySourceCode ) );
+				String connectorMethodSourceCode = getSourceCodeForDelegateMethod( roleMethods[ i ], targetFieldName, roleMap.method() );
 				    	
 				CtMethod newMethodSgn = CtMethod.make(
-								      connectorMethodBodySourceCode,
+								      connectorMethodSourceCode,
 								      newRoleCtClass);
 				    	
 				    	
@@ -282,4 +227,64 @@ public class RoleManagerImpl implements IRoleManager{
     }
 
 	
+
+    /**
+     * Utility method to get the source code of a delegating method.
+     *
+     * \param delegating the method to which the call will be delegated
+     * \param referenceName the name of the variable to use as trampoline for the delegation
+     * \param delegatedName the name of the delegated method or null if the method has the same name
+     * of the delgating one
+     * \return the source code of the method
+     */
+    private final String getSourceCodeForDelegateMethod( Method delegating, String referenceName, String delegatedName ){
+
+	// if no delegated suppose the delegate has the same properties
+	// of the delegating method
+	if( delegatedName == null || delegatedName.isEmpty() )
+	    delegatedName = delegating.getName();
+
+	// what return type does this method have?
+	Class currentReturnType   = delegating.getReturnType();
+	Class[] currentParameters = delegating.getParameterTypes();
+	Class[] currentExceptions = delegating.getExceptionTypes();
+
+	// build a list of parameters
+	StringBuffer paramsNameBuffer = new StringBuffer( 10 * currentParameters.length );
+	StringBuffer paramsListBuffer = new StringBuffer( 10 * currentParameters.length );
+	for( int z = 0; z < currentParameters.length; z++ ){
+	    Class currentParameterType = currentParameters[ z ];
+	    String currentParName = String.format( "delegateParameter%d", z );
+
+	    paramsNameBuffer.append( String.format( "%s %s %s",
+						    ( z > 0 ? "," : "" ),
+						    currentParameterType.getName(),
+						    currentParName )
+				     );
+
+	    paramsListBuffer.append( String.format( "%s %s", ( z > 0 ? "," : "" ), currentParName ) );
+								    
+	}
+
+
+	StringBuffer exceptionBuffer = new StringBuffer( 10 * currentExceptions.length );
+	for( int z = 0; z < currentExceptions.length; z++ )
+	    exceptionBuffer.append( String.format( "%s %s", ( z > 0 ? "," : "" ), currentExceptions[ z ].getName() ) );
+
+
+
+	return String.format( "%s %s %s( %s ) %s  { %s %s.%s( %s ); }",
+			      Modifier.toString( delegating.getModifiers() ).replace( "abstract", "" ), // remove abstract modifier!
+			      currentReturnType.getName().toString(),
+			      delegating.getName(),
+			      paramsNameBuffer.toString(),
+			      ( currentExceptions.length > 0 ? String.format( "throws %s", exceptionBuffer.toString() ) :  "" ),
+			      ("void".equals( currentReturnType.toString() ) ? "" : "return"),
+			      referenceName,
+			      delegatedName,
+			      paramsListBuffer.toString()
+			      );
+
+    }
+
 }

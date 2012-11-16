@@ -339,66 +339,20 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 
 	    // create all the methods (it should be only one)
 	    for( final CtMethod currentMethod : binderClass.getDeclaredMethods() ){
-		methodCode.append( " public ");
-		methodCode.append( currentMethod.getReturnType().getName() );
-		methodCode.append(  " " );
-		methodCode.append( currentMethod.getName() );
-		methodCode.append( "(" );
 
-		final CtClass[] parameters = currentMethod.getParameterTypes();
-		for( int parameterNumber = 0; (parameters != null) && (parameterNumber < parameters.length); parameterNumber++ ){
-		    if( parameterNumber > 0 )
-			methodCode.append( ", " );
+		String methodBodySourceCode = getMethodSourceCode( currentMethod,
+								   privateReferenceName,
+								   targetObjectCtClass,
+								   targetInstance.getClass()
+								   );
 
-		    methodCode.append( parameters[parameterNumber].getName() );
-		    methodCode.append( " " );
-		    methodCode.append( " param" + parameterNumber );
-		}
-
-		methodCode.append( ") " );
-
-		// exception management
-		final CtClass exceptions[] = currentMethod.getExceptionTypes();
-		if( (exceptions != null) && (exceptions.length > 0) ){
-		    methodCode.append( "throws " );
-
-		    for( int exceptionNumber = 0; exceptionNumber < exceptions.length; exceptionNumber++ ){
-			if( exceptionNumber > 0 )
-			    methodCode.append( ", " );
-
-			methodCode.append( exceptions[ exceptionNumber ].getName() );
-		    }
-		}
-
-		methodCode.append( "\n" );
-		// body definition
-		methodCode.append( "{\n\t" );
+		System.out.println( "\n\n\n\n#####Method " + methodBodySourceCode );
 
 
-		// security check: the first argument must be of the right type
-		methodCode.append(" if( param0 == null || (! ( param0 instanceof ");
-		methodCode.append( targetInstance.getClass().getName() );
-		methodCode.append( ") ) )" );
-		methodCode.append( "\n\t\t" );
-		methodCode.append( "throw new " );
-		methodCode.append( TargetBindException.class.getName() );
-		methodCode.append( "(\"The binding object is not of the right type!\");" );
-		methodCode.append( "\n\n" );
-
-
-		methodCode.append( " this." );
-		methodCode.append( privateReferenceName );
-		methodCode.append( " = " );
-		methodCode.append( "(" );
-		methodCode.append( targetObjectCtClass.getName() );
-		methodCode.append( ") " );
-		methodCode.append( "param0;" );
-		methodCode.append( "\n}\n" );
-
-		logger.debug("Generated setter method \n" + methodCode.toString() );
+		logger.debug("Generated method \n" + methodBodySourceCode );
 
 		// now compile the method and add it to the class
-		final CtMethod compiledMethod = CtMethod.make( methodCode.toString(), newFunctionClass );
+		final CtMethod compiledMethod = CtMethod.make( methodBodySourceCode, newFunctionClass );
 		newFunctionClass.addMethod(compiledMethod);
 		logger.debug("Creation of the method completed!");
 	    }
@@ -417,13 +371,8 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 	    return this.defineClass( functionClassName, bytecode, 0, bytecode.length );
 
 
-	} catch (final NotFoundException e) {
+	} catch (final Exception e) {
 	    logger.error("Exception caught while defining a class",e);
-	    throw new ClassNotFoundException("Cannot find class", e );
-	} catch (final IOException e) {
-	    throw new ClassNotFoundException("Cannot find class", e );
-	} catch (final CannotCompileException e) {
-	    logger.error("Cannot compile exception caught while definining a IFunction class ", e);
 	    throw new ClassNotFoundException("Cannot find class", e );
 	} finally{
 	    // the class loader is ready now
@@ -514,7 +463,93 @@ public class FunctionClassLoader extends SecureClassLoader implements IFunctionC
 
 
 
+    /**
+     * Utility method to generate the source code of a method that represents a function.
+     *
+     * @param iFunctionMethod the target method
+     * @param internalReferenceName the name of the reference that will be used to access the
+     * method
+     * @param targetObjectCtClass the target class for the function
+     * @param firstArgumentTypeClass the argument to check as first argument, if null no check code
+     * will be generated
+     * @return the source code for the method body
+     */
+    private final String getMethodSourceCode( CtMethod iFunctionMethod, 
+					      String internalReferenceName,  
+					      CtClass targetObjectCtClass,
+					      Class firstArgumentTypeClass ) throws Exception{
 
+	CtClass params[]     = iFunctionMethod.getParameterTypes();
+	CtClass exceptions[] = iFunctionMethod.getExceptionTypes();
+
+	StringBuffer paramsListBuffer = new StringBuffer( 10 * params.length );
+	StringBuffer paramsNameBuffer = new StringBuffer( 10 * params.length );
+	StringBuffer exceptionsBuffer = new StringBuffer( 10 * exceptions.length );
+	String firstParamName = null;
+
+	for( int i = 0; i < params.length; i++ ){
+	    // compute the name of this parameter
+	    String currentParamName = String.format( "parameter_%d", i );
+	    if( i == 0 )
+		firstParamName = currentParamName;
+
+
+	    paramsListBuffer.append( String.format( "%s %s %s", 
+						    ( i > 0 ? "," : "" ),
+						    params[ i ].getName(),
+						    currentParamName )
+				     );
+
+	    paramsNameBuffer.append( String.format( "%s %s", 
+						    ( i > 0 ? "," : "" ),
+						    currentParamName )
+				     );
+
+	    
+	}
+
+	for( int i = 0; i < exceptions.length; i++ ){
+	    exceptionsBuffer.append( String.format( "%s %s", 
+						    ( i > 0 ? "," : "" ),
+						    exceptions[ i ].getName() )
+				     );
+	}
+
+
+	StringBuffer methodBodySourceCode = new StringBuffer( 500 );
+
+	// do I have to generate a check statament to ensure the first argument
+	// is of the specified type?
+	if( firstArgumentTypeClass != null ){
+	    methodBodySourceCode.append( String.format( "if( %s == null || ( ! ( %s instanceof %s) ) ){ throw new %s(%s); }",
+							firstParamName,
+							firstParamName,
+							firstArgumentTypeClass.getName(),
+							JFKException.class.getName(),
+							" \"The binding object is not of the right type!\" "
+							)
+					 );
+	}
+
+	// generate the assignment of the first parameter to the internal refernce
+	methodBodySourceCode.append( String.format( " %s = (%s) %s; ",
+						    internalReferenceName,
+						    targetObjectCtClass.getName(),
+						    firstParamName
+						    ) 
+				     );
+
+	// generate the source code of the method body
+	return String.format( "%s %s %s( %s ) %s { %s }",
+			      "public",
+			      iFunctionMethod.getReturnType().getName(),
+			      iFunctionMethod.getName(),
+			      paramsListBuffer.toString(),
+			      ( exceptions.length > 0 ? String.format( " throws %s", exceptionsBuffer.toString() ) : "" ),
+			      methodBodySourceCode.toString()
+			      );
+	
+    }
 
 
 }
